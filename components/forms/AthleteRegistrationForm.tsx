@@ -208,7 +208,16 @@ export default function AthleteRegistrationForm({ userId }: { userId: string }) 
       // Get next sequence number via RPC and build athlete ID
       const sport = SPORTS.find((s) => s.id === form.sport_id);
       const sportCode = sport?.code ?? "OT";
+      const sportName = sport?.name ?? form.primary_sport;
       const year = new Date().getFullYear();
+
+      // Look up actual UUID from the sports table (local IDs are strings, not UUIDs)
+      const { data: sportRow } = await supabase
+        .from("sports")
+        .select("id")
+        .eq("code", sportCode)
+        .single();
+      const sportUuid = sportRow?.id ?? null;
 
       const { data: seqData, error: seqError } = await supabase.rpc(
         "next_athlete_sequence",
@@ -235,8 +244,8 @@ export default function AthleteRegistrationForm({ userId }: { userId: string }) 
           city_block: form.city_block || null,
           profile_photo_url: profilePhotoUrl,
           photo_consent: form.photo_consent,
-          primary_sport: form.primary_sport,
-          sport_id: form.sport_id || null,
+          primary_sport: sportName,
+          sport_id: sportUuid,
           position_event_category: form.position_event_category || null,
           dominant_side: form.dominant_side || null,
           current_club_school: form.current_club_school || null,
