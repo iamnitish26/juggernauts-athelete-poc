@@ -126,14 +126,14 @@ create table if not exists public.athlete_id_sequences (
 );
 
 create or replace function public.next_athlete_sequence(p_sport_code char(2), p_year integer)
-returns integer language plpgsql as $$
+returns integer language plpgsql security definer set search_path = '' as $$
 declare
   v_seq integer;
 begin
   insert into public.athlete_id_sequences (sport_code, year, last_sequence)
   values (p_sport_code, p_year, 1)
   on conflict (sport_code, year) do update
-    set last_sequence = athlete_id_sequences.last_sequence + 1
+    set last_sequence = public.athlete_id_sequences.last_sequence + 1
   returning last_sequence into v_seq;
   return v_seq;
 end;
