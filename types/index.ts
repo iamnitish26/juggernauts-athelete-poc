@@ -6,6 +6,8 @@ export type VerificationStatus =
   | "event_verified"
   | "rejected";
 
+export type ProfileStatus = "pending" | "approved" | "rejected";
+
 export type AgeGroup = "U-13" | "U-15" | "U-17" | "U-19" | "Senior";
 
 export type Gender = "male" | "female" | "other" | "prefer_not_to_say";
@@ -60,6 +62,7 @@ export interface Athlete {
   athlete_email: string | null;
   guardian_name: string | null;
   guardian_phone: string | null;
+  guardian_relationship: string | null;
   achievement_summary: string | null;
   certificate_url: string | null;
   video_link: string | null;
@@ -70,6 +73,13 @@ export interface Athlete {
   verification_notes: string | null;
   verified_by: string | null;
   verified_at: string | null;
+  profile_status: ProfileStatus;
+  is_public: boolean;
+  approved_at: string | null;
+  approved_by: string | null;
+  rejected_at: string | null;
+  rejected_by: string | null;
+  rejection_reason: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

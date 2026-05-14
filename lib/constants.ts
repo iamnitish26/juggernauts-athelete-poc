@@ -87,14 +87,46 @@ export function calculateAgeGroup(dob: string): string {
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
 
   if (age < 13) return "U-13";
-  if (age < 15) return "U-13";
   if (age < 15) return "U-15";
-  if (age < 17) return "U-15";
   if (age < 17) return "U-17";
-  if (age < 19) return "U-17";
   if (age < 19) return "U-19";
   return "Senior";
 }
+
+export const DOMINANT_SIDE_OPTIONS = [
+  { value: "right", label: "Right" },
+  { value: "left", label: "Left" },
+  { value: "both", label: "Both" },
+  { value: "not_applicable", label: "Not Applicable" },
+] as const;
+
+export const GUARDIAN_RELATIONSHIP_OPTIONS = [
+  { value: "parent", label: "Parent" },
+  { value: "sibling", label: "Sibling" },
+  { value: "relative", label: "Relative" },
+  { value: "coach", label: "Coach" },
+  { value: "other", label: "Other" },
+] as const;
+
+export const SPORT_POSITION_HINTS: Record<string, string> = {
+  football: "Example: Forward, Midfielder, Goalkeeper",
+  cricket: "Example: Batter, Bowler, All-rounder, Wicketkeeper",
+  athletics: "Example: Sprint, Long Jump, Shot Put",
+  hockey: "Example: Forward, Midfielder, Defender, Goalkeeper",
+  badminton: "Example: Singles, Doubles",
+  basketball: "Example: Point Guard, Shooting Guard, Forward, Center",
+  volleyball: "Example: Setter, Libero, Outside Hitter",
+  kabaddi: "Example: Raider, Defender",
+  wrestling: "Example: Freestyle, Greco-Roman",
+  boxing: "Example: Flyweight, Bantamweight, Lightweight",
+  swimming: "Example: Freestyle, Backstroke, Butterfly, Breaststroke",
+  table_tennis: "Example: Singles, Doubles",
+  tennis: "Example: Singles, Doubles",
+  archery: "Example: Recurve, Compound",
+  other: "Your playing position, event or specialty",
+};
+
+export type ProfileStatus = "pending" | "approved" | "rejected";
 
 export function getAgeFromDob(dob: string): number {
   const birth = new Date(dob);

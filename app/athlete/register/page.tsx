@@ -44,7 +44,7 @@ export default async function AthleteRegisterPage() {
             Get your unique Juggernauts Athlete ID — takes about 3 minutes
           </p>
         </div>
-        <AthleteRegistrationForm userId={user.id} />
+        <AthleteRegistrationForm userId={user.id} userEmail={user.email} />
       </main>
     </div>
   );
