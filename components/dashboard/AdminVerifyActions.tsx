@@ -17,7 +17,6 @@ const STATUS_TRANSITIONS = [
   { value: "self_registered", label: "Reset to Self Registered" },
   { value: "community_verified", label: "Mark Community Verified" },
   { value: "event_verified", label: "Mark Event Verified" },
-  { value: "rejected", label: "Reject Profile" },
 ];
 
 export default function AdminVerifyActions({ athleteDbId, currentStatus, currentNotes }: Props) {
@@ -59,7 +58,6 @@ export default function AdminVerifyActions({ athleteDbId, currentStatus, current
       return;
     }
 
-    // Log to verifications audit table
     await supabase.from("verifications").insert({
       athlete_id: athleteDbId,
       verified_by: user.id,
@@ -68,7 +66,7 @@ export default function AdminVerifyActions({ athleteDbId, currentStatus, current
       notes,
     });
 
-    setSuccess(`Status updated to: ${newStatus.replace("_", " ")}`);
+    setSuccess(`Verification updated to: ${newStatus.replace(/_/g, " ")}`);
     setLoading(false);
     router.refresh();
   }
@@ -76,7 +74,7 @@ export default function AdminVerifyActions({ athleteDbId, currentStatus, current
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500">Current status:</span>
+        <span className="text-sm text-gray-500">Current verification:</span>
         <VerificationBadge status={currentStatus} />
       </div>
 
@@ -92,7 +90,13 @@ export default function AdminVerifyActions({ athleteDbId, currentStatus, current
         {STATUS_TRANSITIONS.filter((s) => s.value !== currentStatus).map((s) => (
           <Button
             key={s.value}
-            variant={s.value === "rejected" ? "danger" : s.value === "event_verified" ? "primary" : "secondary"}
+            variant={
+              s.value === "event_verified"
+                ? "primary"
+                : s.value === "community_verified"
+                ? "secondary"
+                : "outline"
+            }
             size="sm"
             onClick={() => applyStatus(s.value)}
             loading={loading}
@@ -103,10 +107,14 @@ export default function AdminVerifyActions({ athleteDbId, currentStatus, current
       </div>
 
       {success && (
-        <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-xl">{success}</p>
+        <p className="text-sm text-green-700 bg-green-50 px-3 py-2 rounded-xl border border-green-200">
+          {success}
+        </p>
       )}
       {error && (
-        <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-xl">{error}</p>
+        <p className="text-sm text-red-700 bg-red-50 px-3 py-2 rounded-xl border border-red-200">
+          {error}
+        </p>
       )}
     </div>
   );

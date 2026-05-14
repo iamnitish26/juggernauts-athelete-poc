@@ -4,12 +4,35 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { VerificationBadge } from "@/components/ui/Badge";
 import Link from "next/link";
 import AdminVerifyActions from "@/components/dashboard/AdminVerifyActions";
+import AdminProfileActions from "@/components/dashboard/AdminProfileActions";
+import AdminAthleteEditForm from "@/components/dashboard/AdminAthleteEditForm";
+import {
+  CheckCircle,
+  AlertTriangle,
+  ExternalLink,
+  Lock,
+  User,
+} from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export const metadata = { title: "Athlete Detail | Admin" };
+
+const PROFILE_STATUS_LABEL: Record<string, string> = {
+  pending: "Pending Review",
+  approved: "Approved",
+  rejected: "Rejected",
+  inactive: "Inactive",
+};
+
+const PROFILE_STATUS_COLOR: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  approved: "bg-green-100 text-green-800 border-green-200",
+  rejected: "bg-red-100 text-red-800 border-red-200",
+  inactive: "bg-gray-100 text-gray-600 border-gray-200",
+};
 
 export default async function AdminAthleteDetailPage({ params }: PageProps) {
   const { id } = await params;
@@ -24,6 +47,7 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
   if (error || !athlete) notFound();
 
   const age = (() => {
+    if (!athlete.date_of_birth) return null;
     const birth = new Date(athlete.date_of_birth);
     const today = new Date();
     let a = today.getFullYear() - birth.getFullYear();
@@ -35,8 +59,57 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
     return a;
   })();
 
+  // Fetch approver/rejecter profile names if present
+  const approverPromise = athlete.approved_by
+    ? supabase.from("profiles").select("full_name, email").eq("id", athlete.approved_by).single()
+    : Promise.resolve({ data: null });
+  const rejecterPromise = athlete.rejected_by
+    ? supabase.from("profiles").select("full_name, email").eq("id", athlete.rejected_by).single()
+    : Promise.resolve({ data: null });
+
+  const [{ data: approver }, { data: rejecter }] = await Promise.all([
+    approverPromise,
+    rejecterPromise,
+  ]);
+
+  // Data quality checks
+  const qualityChecks = [
+    {
+      label: "Profile photo uploaded",
+      pass: !!athlete.profile_photo_url,
+    },
+    {
+      label: "Photo consent given",
+      pass: athlete.photo_consent === true,
+    },
+    {
+      label: "Achievement summary filled",
+      pass: !!athlete.achievement_summary?.trim(),
+    },
+    {
+      label: "Club / School provided",
+      pass: !!athlete.current_club_school?.trim(),
+    },
+    {
+      label: "Position / Event filled",
+      pass: !!athlete.position_event_category?.trim(),
+    },
+    {
+      label: "Guardian info present (if minor)",
+      pass: age === null || age >= 18 || !!athlete.guardian_name,
+    },
+    {
+      label: "Instagram or video link provided",
+      pass: !!(athlete.instagram_link || athlete.video_link),
+    },
+  ];
+
+  const passCount = qualityChecks.filter((c) => c.pass).length;
+  const isProfileApproved = athlete.profile_status === "approved";
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
         <Link href="/admin/athletes" className="hover:text-[#5B21B6]">
           Athletes
@@ -45,16 +118,44 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
         <span className="text-gray-900 font-medium">{athlete.full_name}</span>
       </div>
 
-      <div className="flex items-start justify-between mb-6">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{athlete.full_name}</h1>
           <p className="font-mono text-sm text-[#5B21B6] mt-0.5">{athlete.athlete_id}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Registered {new Date(athlete.created_at).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
         </div>
-        <VerificationBadge status={athlete.verification_status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+              PROFILE_STATUS_COLOR[athlete.profile_status ?? "pending"] ??
+              "bg-gray-100 text-gray-600 border-gray-200"
+            }`}
+          >
+            {PROFILE_STATUS_LABEL[athlete.profile_status ?? "pending"] ?? athlete.profile_status}
+          </span>
+          <VerificationBadge status={athlete.verification_status} />
+          {isProfileApproved && (
+            <Link
+              href={`/athlete/${athlete.athlete_id}`}
+              target="_blank"
+              className="inline-flex items-center gap-1 text-xs text-[#5B21B6] hover:underline font-medium"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              View Public Profile
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {/* Personal details (admin sees all) */}
+        {/* Personal details */}
         <Card>
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Personal Details</h2>
@@ -62,16 +163,21 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
           <CardBody>
             <dl className="space-y-3 text-sm">
               {[
-                ["Gender", athlete.gender],
-                ["Date of Birth", `${athlete.date_of_birth} (Age ${age})`],
-                ["Age Group", athlete.age_group],
-                ["State", athlete.state],
-                ["District", athlete.district],
+                ["Gender", athlete.gender ?? "—"],
+                [
+                  "Date of Birth",
+                  athlete.date_of_birth
+                    ? `${athlete.date_of_birth}${age !== null ? ` (Age ${age})` : ""}`
+                    : "—",
+                ],
+                ["Age Group", athlete.age_group ?? "—"],
+                ["State", athlete.state ?? "—"],
+                ["District", athlete.district ?? "—"],
                 ["City / Block", athlete.city_block || "—"],
               ].map(([label, value]) => (
-                <div key={label} className="flex justify-between">
-                  <dt className="text-gray-500">{label}</dt>
-                  <dd className="font-medium text-gray-900">{value}</dd>
+                <div key={label} className="flex justify-between gap-2">
+                  <dt className="text-gray-500 shrink-0">{label}</dt>
+                  <dd className="font-medium text-gray-900 text-right">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -86,27 +192,31 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
           <CardBody>
             <dl className="space-y-3 text-sm">
               {[
-                ["Primary Sport", athlete.primary_sport],
-                ["Position", athlete.position_event_category || "—"],
+                ["Primary Sport", athlete.primary_sport ?? "—"],
+                ["Position / Event", athlete.position_event_category || "—"],
                 ["Dominant Side", athlete.dominant_side || "—"],
                 ["Club / School", athlete.current_club_school || "—"],
-                ["Experience", athlete.years_of_experience ? `${athlete.years_of_experience} years` : "—"],
+                [
+                  "Experience",
+                  athlete.years_of_experience ? `${athlete.years_of_experience} years` : "—",
+                ],
               ].map(([label, value]) => (
-                <div key={label} className="flex justify-between">
-                  <dt className="text-gray-500">{label}</dt>
-                  <dd className="font-medium text-gray-900">{value}</dd>
+                <div key={label} className="flex justify-between gap-2">
+                  <dt className="text-gray-500 shrink-0">{label}</dt>
+                  <dd className="font-medium text-gray-900 text-right">{value}</dd>
                 </div>
               ))}
             </dl>
           </CardBody>
         </Card>
 
-        {/* Private contact (admin only) */}
+        {/* Private contact — admin only */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-gray-900">Contact Details</h2>
-              <span className="text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-full">
+              <span className="text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Lock className="w-2.5 h-2.5" />
                 Private
               </span>
             </div>
@@ -118,43 +228,62 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
                 ["Athlete Email", athlete.athlete_email || "—"],
                 ["Guardian Name", athlete.guardian_name || "—"],
                 ["Guardian Phone", athlete.guardian_phone || "—"],
+                ["Guardian Relationship", athlete.guardian_relationship || "—"],
               ].map(([label, value]) => (
-                <div key={label} className="flex justify-between">
-                  <dt className="text-gray-500">{label}</dt>
-                  <dd className="font-medium text-gray-900">{value}</dd>
+                <div key={label} className="flex justify-between gap-2">
+                  <dt className="text-gray-500 shrink-0">{label}</dt>
+                  <dd className="font-medium text-gray-900 text-right">{value}</dd>
                 </div>
               ))}
             </dl>
           </CardBody>
         </Card>
 
-        {/* Achievements */}
+        {/* Achievements & media */}
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Achievements</h2>
+            <h2 className="font-semibold text-gray-900">Achievements &amp; Media</h2>
           </CardHeader>
           <CardBody>
             <p className="text-sm text-gray-700 leading-relaxed mb-3">
-              {athlete.achievement_summary || "—"}
+              {athlete.achievement_summary || (
+                <span className="italic text-gray-400">No achievement summary provided.</span>
+              )}
             </p>
             <dl className="space-y-2 text-sm">
               {athlete.video_link && (
                 <div>
-                  <dt className="text-gray-500 text-xs">Video</dt>
+                  <dt className="text-gray-500 text-xs mb-0.5">Highlight Video</dt>
                   <a
                     href={athlete.video_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#5B21B6] hover:underline text-xs"
+                    className="text-[#5B21B6] hover:underline text-xs flex items-center gap-1"
                   >
+                    <ExternalLink className="w-3 h-3" />
                     {athlete.video_link}
                   </a>
                 </div>
               )}
               {athlete.instagram_link && (
                 <div>
-                  <dt className="text-gray-500 text-xs">Instagram</dt>
-                  <p className="text-xs">{athlete.instagram_link}</p>
+                  <dt className="text-gray-500 text-xs mb-0.5">Instagram</dt>
+                  <p className="text-xs text-gray-700">{athlete.instagram_link}</p>
+                </div>
+              )}
+              {athlete.profile_photo_url && (
+                <div>
+                  <dt className="text-gray-500 text-xs mb-0.5">Profile Photo</dt>
+                  <a
+                    href={athlete.profile_photo_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#5B21B6] hover:underline text-xs flex items-center gap-1"
+                  >
+                    <User className="w-3 h-3" />
+                    View photo
+                    {athlete.photo_consent ? " (consent given)" : " (no consent)"}
+                  </a>
                 </div>
               )}
             </dl>
@@ -162,17 +291,117 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
-      {/* Verification actions */}
-      <Card>
+      {/* Data quality checks */}
+      <Card className="mb-6">
         <CardHeader>
-          <h2 className="font-semibold text-gray-900">Verification Actions</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Data Quality Checks</h2>
+            <span className="text-xs font-semibold text-gray-500">
+              {passCount}/{qualityChecks.length} passing
+            </span>
+          </div>
         </CardHeader>
         <CardBody>
-          <AdminVerifyActions
-            athleteDbId={athlete.id}
-            currentStatus={athlete.verification_status}
-            currentNotes={athlete.verification_notes ?? ""}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {qualityChecks.map((check) => (
+              <div
+                key={check.label}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm ${
+                  check.pass
+                    ? "bg-green-50 text-green-800"
+                    : "bg-amber-50 text-amber-800"
+                }`}
+              >
+                {check.pass ? (
+                  <CheckCircle className="w-4 h-4 shrink-0 text-green-600" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                )}
+                {check.label}
+              </div>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Profile actions */}
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">Profile Actions</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Controls whether this profile is publicly visible
+            </p>
+          </CardHeader>
+          <CardBody>
+            <AdminProfileActions
+              athleteDbId={athlete.id}
+              currentProfileStatus={athlete.profile_status ?? "pending"}
+              currentRejectionReason={athlete.rejection_reason ?? ""}
+            />
+
+            {/* Audit trail */}
+            {(athlete.approved_at || athlete.rejected_at) && (
+              <div className="mt-4 pt-4 border-t border-gray-100 space-y-2 text-xs text-gray-500">
+                {athlete.approved_at && (
+                  <p>
+                    Approved on{" "}
+                    {new Date(athlete.approved_at).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                    {approver && (
+                      <span> by {approver.full_name ?? approver.email}</span>
+                    )}
+                  </p>
+                )}
+                {athlete.rejected_at && (
+                  <p>
+                    Rejected on{" "}
+                    {new Date(athlete.rejected_at).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                    {rejecter && (
+                      <span> by {rejecter.full_name ?? rejecter.email}</span>
+                    )}
+                  </p>
+                )}
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        {/* Verification actions */}
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">Verification Actions</h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Controls the trust badge shown on the public profile
+            </p>
+          </CardHeader>
+          <CardBody>
+            <AdminVerifyActions
+              athleteDbId={athlete.id}
+              currentStatus={athlete.verification_status}
+              currentNotes={athlete.verification_notes ?? ""}
+            />
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Edit form */}
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-gray-900">Edit Profile</h2>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Make corrections to athlete data. Changes are saved immediately.
+          </p>
+        </CardHeader>
+        <CardBody>
+          <AdminAthleteEditForm athlete={athlete} />
         </CardBody>
       </Card>
     </div>
