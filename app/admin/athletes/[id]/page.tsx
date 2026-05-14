@@ -291,6 +291,50 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
         </Card>
       </div>
 
+      {/* Registration source — shown when assisted */}
+      {athlete.registration_source && athlete.registration_source !== "self" && (
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold text-gray-900">Registration Source</h2>
+              <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                {athlete.registration_source}
+              </span>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              {[
+                ["Registration Source", athlete.registration_source],
+                ["Created By Role", athlete.created_by_role || "—"],
+                ["Source Organisation", athlete.source_organisation || "—"],
+                ["Source Team Name", athlete.source_team_name || "—"],
+                ["Source Contact Name", athlete.source_contact_name || "—"],
+                ["Source Contact Phone", athlete.source_contact_phone || "—"],
+                [
+                  "Guardian Consent Status",
+                  (athlete.guardian_consent_status ?? "not_required").replace(/_/g, " "),
+                ],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs text-gray-500 mb-0.5">{label}</dt>
+                  <dd className="font-medium text-gray-900 capitalize">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Guardian consent pending warning */}
+      {athlete.guardian_consent_status === "pending" && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-800">
+          <span className="font-semibold">Guardian consent pending.</span> This athlete appears to
+          be a minor and guardian consent has not been confirmed. Follow up before approving this
+          profile publicly.
+        </div>
+      )}
+
       {/* Data quality checks */}
       <Card className="mb-6">
         <CardHeader>

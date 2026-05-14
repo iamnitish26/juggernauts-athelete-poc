@@ -2,11 +2,13 @@ import { createClient } from "@/lib/supabase/server";
 import { VerificationBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import Link from "next/link";
-import { Search, Lock, ExternalLink } from "lucide-react";
+import { Search, Lock, ExternalLink, UserPlus } from "lucide-react";
 
 interface SearchParams {
   profile_status?: string;
   verification_status?: string;
+  registration_source?: string;
+  guardian_consent?: string;
   sport?: string;
   district?: string;
   age_group?: string;
@@ -34,6 +36,23 @@ const VERIFICATION_STATUS_OPTIONS = [
   { label: "Event Verified", value: "event_verified" },
 ];
 
+const SOURCE_OPTIONS = [
+  { label: "All Sources", value: "" },
+  { label: "Self", value: "self" },
+  { label: "Volunteer", value: "volunteer" },
+  { label: "Admin", value: "admin" },
+  { label: "Captain", value: "captain" },
+  { label: "Coach", value: "coach" },
+];
+
+const CONSENT_OPTIONS = [
+  { label: "All Consent", value: "" },
+  { label: "Not Required", value: "not_required" },
+  { label: "Confirmed", value: "confirmed" },
+  { label: "Pending", value: "pending" },
+  { label: "Rejected", value: "rejected" },
+];
+
 const PROFILE_STATUS_LABEL: Record<string, string> = {
   pending: "Pending",
   approved: "Approved",
@@ -48,11 +67,37 @@ const PROFILE_STATUS_COLOR: Record<string, string> = {
   inactive: "bg-gray-100 text-gray-600",
 };
 
-function buildHref(base: SearchParams, override: SearchParams): string {
+const SOURCE_LABEL: Record<string, string> = {
+  self: "Self",
+  volunteer: "Volunteer",
+  admin: "Admin",
+  captain: "Captain",
+  coach: "Coach",
+  bulk_upload: "Bulk Upload",
+  event_registration: "Event",
+};
+
+const SOURCE_COLOR: Record<string, string> = {
+  self: "bg-gray-100 text-gray-600",
+  volunteer: "bg-blue-100 text-blue-800",
+  admin: "bg-purple-100 text-purple-800",
+  captain: "bg-indigo-100 text-indigo-800",
+  coach: "bg-teal-100 text-teal-800",
+  bulk_upload: "bg-orange-100 text-orange-800",
+};
+
+const CONSENT_COLOR: Record<string, string> = {
+  not_required: "bg-gray-100 text-gray-500",
+  confirmed: "bg-green-100 text-green-800",
+  pending: "bg-amber-100 text-amber-800",
+  rejected: "bg-red-100 text-red-800",
+};
+
+function buildHref(base: SearchParams, override: Partial<SearchParams>): string {
   const merged = { ...base, ...override };
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(merged)) {
-    if (v) params.set(k, v);
+    if (v) params.set(k, v as string);
   }
   const qs = params.toString();
   return `/admin/athletes${qs ? `?${qs}` : ""}`;
@@ -65,7 +110,7 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
   let query = supabase
     .from("athletes")
     .select(
-      "id, athlete_id, full_name, primary_sport, district, age_group, gender, verification_status, profile_status, is_public, created_at, achievement_summary, profile_photo_url"
+      "id, athlete_id, full_name, primary_sport, district, age_group, gender, verification_status, profile_status, registration_source, guardian_consent_status, is_public, created_at, achievement_summary, profile_photo_url"
     )
     .eq("is_active", true)
     .order("created_at", { ascending: false })
@@ -73,6 +118,8 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
 
   if (sp.profile_status) query = query.eq("profile_status", sp.profile_status);
   if (sp.verification_status) query = query.eq("verification_status", sp.verification_status);
+  if (sp.registration_source) query = query.eq("registration_source", sp.registration_source);
+  if (sp.guardian_consent) query = query.eq("guardian_consent_status", sp.guardian_consent);
   if (sp.sport) query = query.eq("primary_sport", sp.sport);
   if (sp.district) query = query.eq("district", sp.district);
   if (sp.age_group) query = query.eq("age_group", sp.age_group);
@@ -81,7 +128,14 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
   const { data: athletes } = await query;
 
   const hasActiveFilter =
-    sp.profile_status || sp.verification_status || sp.sport || sp.district || sp.age_group || sp.q;
+    sp.profile_status ||
+    sp.verification_status ||
+    sp.registration_source ||
+    sp.guardian_consent ||
+    sp.sport ||
+    sp.district ||
+    sp.age_group ||
+    sp.q;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -93,6 +147,13 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
             {hasActiveFilter ? " (filtered)" : ""}
           </p>
         </div>
+        <Link
+          href="/admin/athletes/new"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#5B21B6] hover:bg-[#3B0764] text-white text-sm font-medium transition-colors"
+        >
+          <UserPlus className="w-4 h-4" />
+          Create Athlete ID
+        </Link>
       </div>
 
       {/* Privacy note */}
@@ -109,6 +170,12 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
         {sp.verification_status && (
           <input type="hidden" name="verification_status" value={sp.verification_status} />
         )}
+        {sp.registration_source && (
+          <input type="hidden" name="registration_source" value={sp.registration_source} />
+        )}
+        {sp.guardian_consent && (
+          <input type="hidden" name="guardian_consent" value={sp.guardian_consent} />
+        )}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
@@ -120,9 +187,9 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
         </div>
       </form>
 
-      {/* Filters row */}
+      {/* Filters */}
       <div className="space-y-2 mb-6">
-        {/* Profile status filter */}
+        {/* Profile status */}
         <div className="flex flex-wrap gap-1.5">
           <span className="text-xs text-gray-400 self-center mr-1 font-medium">Profile:</span>
           {PROFILE_STATUS_OPTIONS.map(({ label, value }) => (
@@ -141,7 +208,7 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
           ))}
         </div>
 
-        {/* Verification status filter */}
+        {/* Verification status */}
         <div className="flex flex-wrap gap-1.5">
           <span className="text-xs text-gray-400 self-center mr-1 font-medium">Verification:</span>
           {VERIFICATION_STATUS_OPTIONS.map(({ label, value }) => (
@@ -151,6 +218,44 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
               className={[
                 "px-3 py-1 rounded-full text-xs font-semibold transition-colors",
                 (sp.verification_status ?? "") === value
+                  ? "bg-[#5B21B6] text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200",
+              ].join(" ")}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Registration source */}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-xs text-gray-400 self-center mr-1 font-medium">Source:</span>
+          {SOURCE_OPTIONS.map(({ label, value }) => (
+            <Link
+              key={label}
+              href={buildHref(sp, { registration_source: value })}
+              className={[
+                "px-3 py-1 rounded-full text-xs font-semibold transition-colors",
+                (sp.registration_source ?? "") === value
+                  ? "bg-[#5B21B6] text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200",
+              ].join(" ")}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Guardian consent */}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-xs text-gray-400 self-center mr-1 font-medium">Guardian Consent:</span>
+          {CONSENT_OPTIONS.map(({ label, value }) => (
+            <Link
+              key={label}
+              href={buildHref(sp, { guardian_consent: value })}
+              className={[
+                "px-3 py-1 rounded-full text-xs font-semibold transition-colors",
+                (sp.guardian_consent ?? "") === value
                   ? "bg-[#5B21B6] text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200",
               ].join(" ")}
@@ -183,9 +288,10 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
                     "Athlete",
                     "Athlete ID",
                     "Sport",
-                    "Age Group",
                     "District",
                     "Profile",
+                    "Source",
+                    "Consent",
                     "Verification",
                     "Registered",
                     "Actions",
@@ -208,23 +314,21 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
                   return (
                     <tr key={athlete.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div>
-                            <p className="font-semibold text-sm text-gray-900 flex items-center gap-1">
-                              {athlete.full_name}
-                              {missingData && (
-                                <span
-                                  className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold"
-                                  title="Missing photo or achievement summary"
-                                >
-                                  Incomplete
-                                </span>
-                              )}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {athlete.age_group} · {athlete.gender}
-                            </p>
-                          </div>
+                        <div>
+                          <p className="font-semibold text-sm text-gray-900 flex items-center gap-1">
+                            {athlete.full_name}
+                            {missingData && (
+                              <span
+                                className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-semibold"
+                                title="Missing photo or achievement summary"
+                              >
+                                Incomplete
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {athlete.age_group} · {athlete.gender}
+                          </p>
                         </div>
                       </td>
                       <td className="px-4 py-3">
@@ -234,9 +338,6 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                         {athlete.primary_sport}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
-                        {athlete.age_group}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
                         {athlete.district}
@@ -250,6 +351,27 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
                         >
                           {PROFILE_STATUS_LABEL[athlete.profile_status ?? "pending"] ??
                             athlete.profile_status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                            SOURCE_COLOR[athlete.registration_source ?? "self"] ??
+                            "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {SOURCE_LABEL[athlete.registration_source ?? "self"] ??
+                            athlete.registration_source}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${
+                            CONSENT_COLOR[athlete.guardian_consent_status ?? "not_required"] ??
+                            "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {(athlete.guardian_consent_status ?? "not_required").replace(/_/g, " ")}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -287,7 +409,7 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
                 })}
                 {!athletes?.length && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-12 text-center text-gray-400 text-sm">
+                    <td colSpan={10} className="px-4 py-12 text-center text-gray-400 text-sm">
                       No athletes found
                       {hasActiveFilter && (
                         <span>
@@ -332,17 +454,34 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
                   >
                     {PROFILE_STATUS_LABEL[athlete.profile_status ?? "pending"]}
                   </span>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      SOURCE_COLOR[athlete.registration_source ?? "self"] ??
+                      "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {SOURCE_LABEL[athlete.registration_source ?? "self"]}
+                  </span>
                   <VerificationBadge status={athlete.verification_status} />
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-gray-500 mb-2">
                 {athlete.primary_sport} · {athlete.age_group} · {athlete.district}
               </p>
 
               {missingData && (
                 <p className="text-[10px] bg-amber-50 text-amber-700 px-2 py-1 rounded-lg mb-2 font-medium">
-                  Incomplete: {!hasPhoto ? "missing photo" : ""}{!hasPhoto && !hasAchievement ? ", " : ""}{!hasAchievement ? "missing achievements" : ""}
+                  Incomplete:{" "}
+                  {[!hasPhoto && "missing photo", !hasAchievement && "missing achievements"]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
+              )}
+
+              {athlete.guardian_consent_status === "pending" && (
+                <p className="text-[10px] bg-amber-50 text-amber-700 px-2 py-1 rounded-lg mb-2 font-medium">
+                  Guardian consent pending
                 </p>
               )}
 

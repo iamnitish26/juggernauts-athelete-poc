@@ -63,6 +63,12 @@ interface FormData {
   instagram_link: string;
   data_consent: boolean;
   guardian_consent: boolean;
+  // Assisted registration fields
+  source_organisation: string;
+  source_team_name: string;
+  source_contact_name: string;
+  source_contact_phone: string;
+  guardian_consent_confirmed_in_person: boolean;
 }
 
 type FormErrors = Partial<Record<keyof FormData | "certificate", string>>;
@@ -113,10 +119,17 @@ function validateCertificateFile(file: File): string | null {
 export default function AthleteRegistrationForm({
   userId,
   userEmail,
+  mode = "self",
+  creatorRole,
+  createdByUserId,
 }: {
   userId: string;
   userEmail?: string;
+  mode?: "self" | "assisted";
+  creatorRole?: "volunteer" | "admin";
+  createdByUserId?: string;
 }) {
+  const isAssisted = mode === "assisted";
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>({
     full_name: "",
@@ -144,6 +157,11 @@ export default function AthleteRegistrationForm({
     instagram_link: "",
     data_consent: false,
     guardian_consent: false,
+    source_organisation: "",
+    source_team_name: "",
+    source_contact_name: "",
+    source_contact_phone: "",
+    guardian_consent_confirmed_in_person: false,
   });
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [certificate, setCertificate] = useState<File | null>(null);
@@ -221,7 +239,9 @@ export default function AthleteRegistrationForm({
         setSubmitError("You must agree to the data usage consent to submit.");
         return false;
       }
-      if (minor && !form.guardian_consent) {
+      // For self-registration, guardian consent checkbox is required for minors
+      // For assisted, guardian consent can be pending (volunteer can submit without it)
+      if (minor && !isAssisted && !form.guardian_consent) {
         setSubmitError("Guardian consent is required for athletes under 18.");
         return false;
       }
@@ -246,10 +266,14 @@ export default function AthleteRegistrationForm({
     setSubmitError("");
 
     try {
+      // Storage owner: for assisted registrations, use creator's ID; for self, use athlete's ID
+      const storageOwner = isAssisted && createdByUserId ? createdByUserId : userId;
+      const storageSuffix = isAssisted ? `/assisted-${Date.now()}` : "";
+
       let profilePhotoUrl: string | null = null;
       if (profilePhoto && form.photo_consent) {
         const ext = profilePhoto.name.split(".").pop();
-        const path = `athletes/${userId}/profile.${ext}`;
+        const path = `athletes/${storageOwner}${storageSuffix}/profile.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("athlete-media")
           .upload(path, profilePhoto, { upsert: true });
@@ -262,7 +286,7 @@ export default function AthleteRegistrationForm({
       let certificateUrl: string | null = null;
       if (certificate) {
         const ext = certificate.name.split(".").pop();
-        const path = `athletes/${userId}/certificate.${ext}`;
+        const path = `athletes/${storageOwner}${storageSuffix}/certificate.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("athlete-media")
           .upload(path, certificate, { upsert: true });
@@ -297,10 +321,26 @@ export default function AthleteRegistrationForm({
       const seq = String(seqData).padStart(6, "0");
       const athleteId = `JG-OD-${sportCode}-${year}-${seq}`;
 
+      // Determine guardian consent status
+      let guardianConsentStatus = "not_required";
+      if (minor) {
+        if (isAssisted) {
+          guardianConsentStatus = form.guardian_consent_confirmed_in_person
+            ? "confirmed"
+            : "pending";
+        } else {
+          guardianConsentStatus = form.guardian_consent ? "confirmed" : "pending";
+        }
+      }
+
       const { data: athlete, error: insertError } = await supabase
         .from("athletes")
         .insert({
-          user_id: userId,
+          // Self-registration: user_id = logged-in user. Assisted: user_id = null (unclaimed)
+          user_id: isAssisted ? null : userId,
+          created_by_user_id: isAssisted ? (createdByUserId ?? userId) : null,
+          created_by_role: isAssisted ? (creatorRole ?? "volunteer") : null,
+          registration_source: isAssisted ? (creatorRole ?? "volunteer") : "self",
           athlete_id: athleteId,
           full_name: form.full_name.trim(),
           gender: form.gender,
@@ -329,7 +369,13 @@ export default function AthleteRegistrationForm({
           video_link: form.video_link || null,
           instagram_link: form.instagram_link || null,
           data_consent: form.data_consent,
-          guardian_consent: minor ? form.guardian_consent : null,
+          guardian_consent: minor && !isAssisted ? form.guardian_consent : null,
+          guardian_consent_status: guardianConsentStatus,
+          // Assisted registration source metadata
+          source_organisation: isAssisted ? form.source_organisation || null : null,
+          source_team_name: isAssisted ? form.source_team_name || null : null,
+          source_contact_name: isAssisted ? form.source_contact_name || null : null,
+          source_contact_phone: isAssisted ? form.source_contact_phone || null : null,
           verification_status: "self_registered",
           profile_status: "pending",
           is_public: false,
@@ -358,8 +404,9 @@ export default function AthleteRegistrationForm({
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Athlete ID Created!</h2>
           <p className="text-gray-600 text-sm leading-relaxed">
-            Your Juggernauts Athlete ID has been created successfully. Your athlete profile has
-            been submitted for admin review.
+            {isAssisted
+              ? "The Juggernauts Athlete ID has been created on behalf of the athlete and submitted for admin review."
+              : "Your Juggernauts Athlete ID has been created successfully. Your athlete profile has been submitted for admin review."}
           </p>
         </div>
 
@@ -412,18 +459,38 @@ export default function AthleteRegistrationForm({
           >
             Check Profile Status
           </Button>
-          <Button
-            variant="ghost"
-            onClick={() => router.push("/events")}
-            className="w-full"
-          >
-            Browse Events
-          </Button>
+          {isAssisted && creatorRole === "volunteer" && (
+            <Button
+              variant="primary"
+              onClick={() => router.push("/volunteer")}
+              className="w-full"
+            >
+              Back to Volunteer Dashboard
+            </Button>
+          )}
+          {isAssisted && creatorRole === "admin" && (
+            <Button
+              variant="primary"
+              onClick={() => router.push("/admin/athletes")}
+              className="w-full"
+            >
+              View All Athletes
+            </Button>
+          )}
+          {!isAssisted && (
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/events")}
+              className="w-full"
+            >
+              Browse Events
+            </Button>
+          )}
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push(isAssisted && creatorRole === "volunteer" ? "/volunteer" : "/")}
             className="text-sm text-gray-400 hover:text-gray-600 text-center py-1"
           >
-            Back to Home
+            {isAssisted ? "Back to Dashboard" : "Back to Home"}
           </button>
         </div>
       </div>
@@ -435,6 +502,23 @@ export default function AthleteRegistrationForm({
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8">
+      {/* Assisted registration banner */}
+      {isAssisted && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 flex items-start gap-3">
+          <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-blue-900">
+              Creating Athlete ID on behalf of an athlete
+            </p>
+            <p className="text-xs text-blue-700 mt-0.5">
+              You are registering this profile as a {creatorRole ?? "volunteer"}. The profile will
+              be pending admin approval before it becomes public. Ensure you have the athlete{" "}
+              {`(and guardian's, if under 18)`} consent before submitting.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Desktop step indicator */}
       <div className="hidden sm:flex items-center mb-8">
         {STEPS.map((s, i) => (
@@ -737,6 +821,41 @@ export default function AthleteRegistrationForm({
               </p>
             </div>
 
+            {/* Assisted registration source details */}
+            {isAssisted && (
+              <div className="space-y-4 pt-3 border-t border-blue-100">
+                <p className="text-xs font-semibold text-blue-800">
+                  Source Details <span className="text-gray-400 font-normal">(admin records only — not shown publicly)</span>
+                </p>
+                <Input
+                  label="Organisation / School / Club"
+                  value={form.source_organisation}
+                  onChange={(e) => update("source_organisation", e.target.value)}
+                  placeholder="e.g. SAI Bhubaneswar, Cuttack FA, Sunrise School"
+                  hint="The school, club, or organisation you are registering this athlete from"
+                />
+                <Input
+                  label="Team Name"
+                  value={form.source_team_name}
+                  onChange={(e) => update("source_team_name", e.target.value)}
+                  placeholder="e.g. U-15 Boys Football Team"
+                />
+                <Input
+                  label="Your Contact Name"
+                  value={form.source_contact_name}
+                  onChange={(e) => update("source_contact_name", e.target.value)}
+                  placeholder="Coach / Teacher / Volunteer name"
+                />
+                <Input
+                  label="Your Contact Phone"
+                  type="tel"
+                  value={form.source_contact_phone}
+                  onChange={(e) => update("source_contact_phone", e.target.value)}
+                  placeholder="9876543210"
+                />
+              </div>
+            )}
+
             {minor && (
               <div className="space-y-4 pt-3 border-t border-orange-100">
                 <Input
@@ -913,10 +1032,9 @@ export default function AthleteRegistrationForm({
             <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed">
               <p className="font-semibold text-[#3B0764] mb-2">Data Usage Policy</p>
               <p className="text-sm">
-                Your information will be used to create and manage your athlete profile on the
-                Juggernauts platform. Private data (phone, email, guardian details, date of birth)
-                will never be shown publicly. Your public profile will only show your name, sport,
-                district, age group, and achievements.
+                {isAssisted
+                  ? "The athlete's information will be used to create and manage their profile on the Juggernauts platform. Private data (phone, email, guardian details, date of birth) will never be shown publicly. The public profile will only show name, sport, district, age group, and achievements."
+                  : "Your information will be used to create and manage your athlete profile on the Juggernauts platform. Private data (phone, email, guardian details, date of birth) will never be shown publicly. Your public profile will only show your name, sport, district, age group, and achievements."}
               </p>
             </div>
 
@@ -929,9 +1047,10 @@ export default function AthleteRegistrationForm({
                   className="mt-0.5 rounded text-[#5B21B6]"
                 />
                 <span className="text-sm text-gray-700">
-                  <span className="font-semibold">Data Usage Consent *</span> — I consent to
-                  Juggernauts collecting and using my information for sports profiling, event
-                  registration, and talent discovery purposes.
+                  <span className="font-semibold">Data Usage Consent *</span> —{" "}
+                  {isAssisted
+                    ? "I confirm that I have the athlete's consent (and guardian's consent if under 18) to submit this profile to Juggernauts for sports profiling, event registration, and talent discovery purposes."
+                    : "I consent to Juggernauts collecting and using my information for sports profiling, event registration, and talent discovery purposes."}
                 </span>
               </label>
 
@@ -949,7 +1068,7 @@ export default function AthleteRegistrationForm({
                 </span>
               </label>
 
-              {minor && (
+              {minor && !isAssisted && (
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -961,6 +1080,25 @@ export default function AthleteRegistrationForm({
                     <span className="font-semibold">Guardian Consent *</span> — As the
                     parent/guardian of this athlete, I consent to their profile being created on
                     the Juggernauts platform.
+                  </span>
+                </label>
+              )}
+
+              {minor && isAssisted && (
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.guardian_consent_confirmed_in_person}
+                    onChange={(e) => update("guardian_consent_confirmed_in_person", e.target.checked)}
+                    className="mt-0.5 rounded text-[#5B21B6]"
+                  />
+                  <span className="text-sm text-gray-700">
+                    <span className="font-semibold">Guardian Consent Confirmed</span> — I confirm
+                    that the parent or guardian of this athlete has given verbal or written consent
+                    for this profile to be created.{" "}
+                    <span className="text-gray-400 text-xs">
+                      (Leave unchecked if consent is still pending — admin will follow up)
+                    </span>
                   </span>
                 </label>
               )}
