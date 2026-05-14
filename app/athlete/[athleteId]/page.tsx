@@ -1,21 +1,60 @@
-import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { VerificationBadge } from "@/components/ui/Badge";
 import AthleteQRCode from "@/components/ui/AthleteQRCode";
-import { MapPin, Trophy, BookOpen, Share2, ExternalLink, User } from "lucide-react";
-import type { Athlete } from "@/types";
+import SharePanel from "./SharePanel";
+import PlayerCard from "./PlayerCard";
+import {
+  MapPin,
+  Trophy,
+  BookOpen,
+  ExternalLink,
+  Lock,
+  Mail,
+} from "lucide-react";
 
 interface PageProps {
   params: Promise<{ athleteId: string }>;
 }
 
+const VERIFICATION_EXPLANATIONS: Record<string, string> = {
+  self_registered:
+    "Profile submitted by athlete/guardian. Not yet verified by Juggernauts.",
+  community_verified: "Verified by a Juggernauts volunteer.",
+  event_verified:
+    "Verified through participation in a Juggernauts or partner event.",
+};
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { athleteId } = await params;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("athletes")
+    .select("full_name, primary_sport, district, profile_status, is_public")
+    .eq("athlete_id", athleteId)
+    .single();
+
+  if (!data || data.profile_status !== "approved" || !data.is_public) {
+    return {
+      title: "Athlete Profile | Juggernauts Athlete ID",
+    };
+  }
+
   return {
-    title: `${athleteId} | Juggernauts Athlete Profile`,
-    description: `View the public sports profile for athlete ${athleteId} on the Juggernauts platform.`,
+    title: `${data.full_name} — ${data.primary_sport} | Juggernauts Athlete ID`,
+    description: `${data.full_name} is a ${data.primary_sport} player from ${data.district}, Odisha. View their Juggernauts Athlete ID profile.`,
+    openGraph: {
+      title: `${data.full_name} | Juggernauts Athlete ID`,
+      description: `${data.primary_sport} · ${data.district}, Odisha · ${athleteId}`,
+    },
   };
 }
 
@@ -23,8 +62,9 @@ export default async function AthleteProfilePage({ params }: PageProps) {
   const { athleteId } = await params;
   const supabase = await createClient();
 
-  // Fetch only public-safe fields — never expose phone, email, guardian, exact DOB
-  const { data: athlete, error } = await supabase
+  // Fetch public-safe fields only — never expose phone, email, guardian, exact DOB
+  // profile_status and is_public are needed to enforce visibility logic
+  const { data: athlete } = await supabase
     .from("athletes")
     .select(
       `
@@ -32,14 +72,11 @@ export default async function AthleteProfilePage({ params }: PageProps) {
       primary_sport, position_event_category, district, state,
       age_group, current_club_school, achievement_summary,
       verification_status, instagram_link, video_link,
-      date_of_birth, is_active, created_at
+      is_active, created_at, profile_status, is_public
     `
     )
     .eq("athlete_id", athleteId)
-    .eq("is_active", true)
     .single();
-
-  if (error || !athlete) notFound();
 
   const {
     data: { user },
@@ -55,17 +92,56 @@ export default async function AthleteProfilePage({ params }: PageProps) {
     navUser = { email: user.email, role: profile?.role };
   }
 
-  // Derive age from DOB (show only age group, not exact DOB)
-  const birth = new Date(athlete.date_of_birth);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  if (
-    today.getMonth() < birth.getMonth() ||
-    (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())
-  )
-    age--;
+  // Show "not available" when:
+  //   - athlete not found (ID doesn't exist, or RLS blocks it for non-owner)
+  //   - profile_status is not approved (treat missing column as backwards-compat approved)
+  //   - is_public is false (treat missing column as backwards-compat true)
+  const isApproved =
+    !athlete ||
+    (athlete.profile_status !== undefined
+      ? athlete.profile_status === "approved"
+      : true);
+  const isPublic =
+    !athlete ||
+    (athlete.is_public !== undefined ? athlete.is_public === true : true);
+
+  if (!athlete || !isApproved || !isPublic) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
+        <Navbar user={navUser} />
+        <main className="flex-1 flex items-center justify-center px-4 py-16">
+          <div className="text-center max-w-sm">
+            <div className="w-16 h-16 bg-[#F3E8FF] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-8 h-8 text-[#5B21B6]" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">
+              Profile Not Available
+            </h1>
+            <p className="text-gray-500 text-sm mb-6">
+              This Athlete ID profile is not publicly available. It may be
+              pending review or has not been approved yet.
+            </p>
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Browse Events
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const memberSince = new Date(athlete.created_at).getFullYear();
+  const initials = getInitials(athlete.full_name);
+  const profileUrl = `${
+    process.env.NEXT_PUBLIC_APP_URL ?? ""
+  }/athlete/${athleteId}`;
+  const showPhoto = !!(athlete.profile_photo_url && athlete.photo_consent);
+  const verificationExplanation =
+    VERIFICATION_EXPLANATIONS[athlete.verification_status] ?? "";
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
@@ -76,22 +152,25 @@ export default async function AthleteProfilePage({ params }: PageProps) {
         <div
           className="pt-12 pb-20 px-4"
           style={{
-            background: "linear-gradient(135deg, #3B0764 0%, #5B21B6 60%, #7C3AED 100%)",
+            background:
+              "linear-gradient(135deg, #3B0764 0%, #5B21B6 60%, #7C3AED 100%)",
           }}
         >
           <div className="max-w-2xl mx-auto text-white text-center">
             {/* Avatar */}
             <div className="mx-auto mb-4 w-24 h-24 rounded-3xl overflow-hidden border-4 border-white/20 shadow-lg bg-white/10">
-              {athlete.profile_photo_url && athlete.photo_consent ? (
+              {showPhoto ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={athlete.profile_photo_url}
+                  src={athlete.profile_photo_url!}
                   alt={athlete.full_name}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <User className="w-10 h-10 text-white/60" />
+                  <span className="text-3xl font-extrabold text-white/90">
+                    {initials}
+                  </span>
                 </div>
               )}
             </div>
@@ -102,10 +181,14 @@ export default async function AthleteProfilePage({ params }: PageProps) {
               {athlete.athlete_id}
             </p>
 
-            <VerificationBadge
-              status={athlete.verification_status}
-              className="mb-4"
-            />
+            <div className="flex flex-col items-center gap-1 mb-3">
+              <VerificationBadge status={athlete.verification_status} />
+              {verificationExplanation && (
+                <p className="text-xs text-purple-300 max-w-xs">
+                  {verificationExplanation}
+                </p>
+              )}
+            </div>
 
             <div className="flex items-center justify-center gap-1 text-purple-200 text-sm">
               <MapPin className="w-3.5 h-3.5" />
@@ -115,9 +198,9 @@ export default async function AthleteProfilePage({ params }: PageProps) {
         </div>
 
         {/* Profile card */}
-        <div className="max-w-2xl mx-auto px-4 -mt-10 pb-12">
+        <div className="max-w-2xl mx-auto px-4 -mt-10 pb-12 space-y-4">
           <div className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden">
-            {/* Sport info grid */}
+            {/* Sport info grid — no exact age, age group only */}
             <div className="p-6 grid grid-cols-2 gap-4">
               {[
                 { label: "Sport", value: athlete.primary_sport },
@@ -126,7 +209,6 @@ export default async function AthleteProfilePage({ params }: PageProps) {
                   label: "Position / Event",
                   value: athlete.position_event_category || "—",
                 },
-                { label: "Age", value: `${age} years` },
                 {
                   label: "Club / School",
                   value: athlete.current_club_school || "—",
@@ -142,24 +224,28 @@ export default async function AthleteProfilePage({ params }: PageProps) {
               ))}
             </div>
 
-            {/* Achievements */}
-            {athlete.achievement_summary && (
-              <div className="px-6 pb-4">
-                <div className="border-t border-gray-100 pt-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Trophy className="w-4 h-4 text-[#5B21B6]" />
-                    <h3 className="text-sm font-semibold text-gray-800">
-                      Achievements
-                    </h3>
-                  </div>
+            {/* Achievements — always shown */}
+            <div className="px-6 pb-4">
+              <div className="border-t border-gray-100 pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="w-4 h-4 text-[#5B21B6]" />
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Achievements
+                  </h3>
+                </div>
+                {athlete.achievement_summary ? (
                   <p className="text-sm text-gray-700 leading-relaxed">
                     {athlete.achievement_summary}
                   </p>
-                </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">
+                    No achievements added yet.
+                  </p>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Player bio placeholder */}
+            {/* Player summary */}
             <div className="px-6 pb-4">
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -169,7 +255,7 @@ export default async function AthleteProfilePage({ params }: PageProps) {
                   </h3>
                 </div>
                 <p className="text-sm text-gray-500 italic">
-                  {/* TODO: Replace with AI-generated bio when feature is built */}
+                  {/* TODO: Replace with AI-generated bio from achievement_summary when feature is built */}
                   A dedicated {athlete.primary_sport} player from{" "}
                   {athlete.district}, Odisha. Competing in the{" "}
                   {athlete.age_group} category
@@ -190,7 +276,10 @@ export default async function AthleteProfilePage({ params }: PageProps) {
                       href={
                         athlete.instagram_link.startsWith("http")
                           ? athlete.instagram_link
-                          : `https://instagram.com/${athlete.instagram_link.replace("@", "")}`
+                          : `https://instagram.com/${athlete.instagram_link.replace(
+                              "@",
+                              ""
+                            )}`
                       }
                       target="_blank"
                       rel="noopener noreferrer"
@@ -215,16 +304,61 @@ export default async function AthleteProfilePage({ params }: PageProps) {
               </div>
             )}
 
-            {/* QR + Share */}
-            <div className="border-t border-gray-100 px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* QR code */}
+            <div className="border-t border-gray-100 px-6 py-5 flex justify-center">
               <AthleteQRCode athleteId={athlete.athlete_id} size={100} />
-              <ShareButton athleteId={athlete.athlete_id} name={athlete.full_name} />
             </div>
           </div>
 
+          {/* Share section */}
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+              Share this profile
+            </h3>
+            <SharePanel
+              athleteId={athlete.athlete_id}
+              name={athlete.full_name}
+              sport={athlete.primary_sport}
+              ageGroup={athlete.age_group}
+              district={athlete.district}
+              profileUrl={profileUrl}
+            />
+          </div>
+
+          {/* Player card */}
+          <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">
+              Shareable Player Card
+            </h3>
+            <PlayerCard
+              athleteId={athlete.athlete_id}
+              name={athlete.full_name}
+              sport={athlete.primary_sport}
+              district={athlete.district}
+              ageGroup={athlete.age_group}
+              positionEvent={athlete.position_event_category}
+              verificationStatus={athlete.verification_status}
+              initials={initials}
+              photoUrl={athlete.profile_photo_url}
+              photoConsent={athlete.photo_consent}
+            />
+          </div>
+
+          {/* Request correction */}
+          <div className="text-center">
+            <a
+              href={`mailto:hello@juggernauts.in?subject=Profile Correction Request — ${athleteId}&body=Athlete ID: ${athleteId}%0D%0AName: ${athlete.full_name}%0D%0A%0D%0APlease describe the correction needed:%0D%0A`}
+              className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#5B21B6] transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5" />
+              Request a correction for this profile
+            </a>
+          </div>
+
           {/* Privacy note */}
-          <p className="text-center text-xs text-gray-400 mt-4">
-            🔒 This is a public profile. Private data (phone, email, date of birth,
+          <p className="text-center text-xs text-gray-400">
+            <Lock className="w-3 h-3 inline mr-1" />
+            This is a public profile. Private data (phone, email, date of birth,
             guardian details) is never shown here.
           </p>
         </div>
@@ -232,39 +366,5 @@ export default async function AthleteProfilePage({ params }: PageProps) {
 
       <Footer />
     </div>
-  );
-}
-
-function ShareButton({ athleteId, name }: { athleteId: string; name: string }) {
-  return (
-    <div className="flex flex-col items-center sm:items-end gap-2 text-center sm:text-right">
-      <p className="text-xs text-gray-500 max-w-xs">
-        Share this profile on WhatsApp, Instagram, or copy the link
-      </p>
-      <ShareButtonClient athleteId={athleteId} name={name} />
-    </div>
-  );
-}
-
-// Client component for the share button
-function ShareButtonClient({ athleteId, name }: { athleteId: string; name: string }) {
-  "use client";
-  // Rendered as-is — interactivity added via onClick in a client wrapper
-  // For now, renders as a regular anchor; full client share uses ShareButtonWrapper
-  return (
-    <a
-      href={`https://wa.me/?text=${encodeURIComponent(
-        `🏆 Check out ${name}'s athlete profile on Juggernauts!\n\n${
-          process.env.NEXT_PUBLIC_APP_URL ??
-          (typeof window !== "undefined" ? window.location.origin : "")
-        }/athlete/${athleteId}`
-      )}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors"
-    >
-      <Share2 className="w-4 h-4" />
-      Share on WhatsApp
-    </a>
   );
 }
