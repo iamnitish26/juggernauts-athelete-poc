@@ -255,9 +255,8 @@ function ShareButtonClient({ athleteId, name }: { athleteId: string; name: strin
     <a
       href={`https://wa.me/?text=${encodeURIComponent(
         `🏆 Check out ${name}'s athlete profile on Juggernauts!\n\n${
-          typeof window !== "undefined"
-            ? window.location.origin
-            : "https://juggernauts.in"
+          process.env.NEXT_PUBLIC_APP_URL ??
+          (typeof window !== "undefined" ? window.location.origin : "")
         }/athlete/${athleteId}`
       )}`}
       target="_blank"

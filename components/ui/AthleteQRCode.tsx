@@ -11,7 +11,8 @@ export default function AthleteQRCode({ athleteId, size = 128 }: AthleteQRCodePr
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const profileUrl = `${window.location.origin}/athlete/${athleteId}`;
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+    const profileUrl = `${base}/athlete/${athleteId}`;
 
     import("qrcode").then((QRCode) => {
       if (canvasRef.current) {

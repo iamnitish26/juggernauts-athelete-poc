@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trophy, CheckCircle } from "lucide-react";
+import { Trophy, CheckCircle, Mail } from "lucide-react";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -15,6 +15,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
   const router = useRouter();
   const supabase = createClient();
 
@@ -34,7 +36,7 @@ export default function RegisterPage() {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/athlete/register`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback`,
       },
     });
 
@@ -48,20 +50,52 @@ export default function RegisterPage() {
     setLoading(false);
   }
 
+  async function handleResend() {
+    setResendLoading(true);
+    setResendMessage("");
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback`,
+      },
+    });
+    setResendLoading(false);
+    setResendMessage(error ? error.message : "Verification email resent. Check your inbox.");
+  }
+
   if (success) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] px-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-[#F3E8FF] rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="w-8 h-8 text-[#5B21B6]" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-gray-600 text-sm mb-6">
-            We sent a verification link to <strong>{email}</strong>. Click the link
-            to verify your account and then complete your athlete registration.
+          <h2 className="text-xl font-bold text-gray-900 mb-2">
+            Verify your email to continue
+          </h2>
+          <p className="text-gray-600 text-sm mb-2">
+            We sent a verification link to <strong>{email}</strong>.
           </p>
+          <p className="text-gray-500 text-sm mb-6">
+            Click the link in the email to confirm your account. You&apos;ll then be
+            taken directly to complete your Athlete ID profile.
+          </p>
+          {resendMessage && (
+            <p className={`text-sm mb-4 ${resendMessage.startsWith("Verification") ? "text-green-600" : "text-red-600"}`}>
+              {resendMessage}
+            </p>
+          )}
+          <Button
+            variant="outline"
+            className="w-full mb-3"
+            loading={resendLoading}
+            onClick={handleResend}
+          >
+            Resend verification email
+          </Button>
           <Link href="/auth/login">
-            <Button variant="outline" className="w-full">
+            <Button variant="ghost" className="w-full text-sm">
               Back to Sign In
             </Button>
           </Link>

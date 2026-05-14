@@ -3,7 +3,17 @@ import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Button from "@/components/ui/Button";
-import { Trophy, Shield, Calendar, Star, ArrowRight, CheckCircle, Users, MapPin } from "lucide-react";
+import {
+  Trophy,
+  Shield,
+  Calendar,
+  Star,
+  ArrowRight,
+  CheckCircle,
+  Users,
+  MapPin,
+  Lock,
+} from "lucide-react";
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -12,16 +22,29 @@ export default async function LandingPage() {
   } = await supabase.auth.getUser();
 
   let profile = null;
+  let hasAthleteProfile = false;
+
   if (user) {
-    const { data } = await supabase
+    const { data: p } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
-    profile = data;
+    profile = p;
+
+    if (profile?.role === "athlete") {
+      const { data: athlete } = await supabase
+        .from("athletes")
+        .select("athlete_id")
+        .eq("user_id", user.id)
+        .single();
+      hasAthleteProfile = !!athlete;
+    }
   }
 
-  const navUser = user ? { email: user.email, role: profile?.role } : null;
+  const navUser = user
+    ? { email: user.email, role: profile?.role, hasAthleteProfile }
+    : null;
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -31,22 +54,22 @@ export default async function LandingPage() {
       <section
         className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8"
         style={{
-          background: "linear-gradient(135deg, #3B0764 0%, #5B21B6 55%, #7C3AED 100%)",
+          background:
+            "linear-gradient(135deg, #3B0764 0%, #5B21B6 55%, #7C3AED 100%)",
         }}
       >
-        {/* Decorative circles */}
         <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 bg-white translate-x-1/3 -translate-y-1/3" />
         <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-10 bg-white -translate-x-1/3 translate-y-1/3" />
 
         <div className="relative max-w-4xl mx-auto text-center text-white">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium mb-6">
-            <Trophy className="w-4 h-4 text-yellow-300" />
-            <span>Odisha's Grassroots Sports Platform</span>
+            <Trophy className="w-4 h-4 text-purple-300" />
+            <span>Odisha&apos;s Grassroots Sports Platform</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight text-balance mb-6">
             Your Digital
-            <span className="block text-yellow-300">Athlete Identity</span>
+            <span className="block text-purple-200">Athlete Identity</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-purple-100 max-w-2xl mx-auto leading-relaxed mb-10">
@@ -56,10 +79,7 @@ export default async function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link href="/auth/register">
-              <Button
-                size="lg"
-                className="bg-yellow-400 hover:bg-yellow-300 text-[#3B0764] font-bold shadow-lg w-full sm:w-auto"
-              >
+              <Button size="lg" className="w-full sm:w-auto">
                 Create Athlete ID
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -68,7 +88,7 @@ export default async function LandingPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white/40 text-white hover:bg-white/10 w-full sm:w-auto"
+                className="border-white/60 text-white bg-white/10 hover:bg-white/20 w-full sm:w-auto"
               >
                 <Calendar className="w-4 h-4" />
                 View Events
@@ -78,13 +98,13 @@ export default async function LandingPage() {
 
           <div className="mt-12 grid grid-cols-3 gap-6 max-w-sm mx-auto">
             {[
-              { value: "30+", label: "Districts" },
+              { value: "30", label: "Districts" },
               { value: "15+", label: "Sports" },
               { value: "Free", label: "Registration" },
             ].map(({ value, label }) => (
               <div key={label} className="text-center">
-                <div className="text-2xl font-bold text-yellow-300">{value}</div>
-                <div className="text-xs text-purple-200 mt-0.5">{label}</div>
+                <div className="text-2xl font-bold text-purple-200">{value}</div>
+                <div className="text-xs text-purple-300 mt-0.5">{label}</div>
               </div>
             ))}
           </div>
@@ -171,7 +191,10 @@ export default async function LandingPage() {
                   "Digital achievement record",
                   "Shareable profile for WhatsApp & Instagram",
                 ].map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li
+                    key={item}
+                    className="flex items-start gap-2 text-sm text-gray-700"
+                  >
                     <CheckCircle className="w-4 h-4 text-[#5B21B6] mt-0.5 shrink-0" />
                     {item}
                   </li>
@@ -189,8 +212,8 @@ export default async function LandingPage() {
               </div>
             </div>
 
+            {/* Sample athlete card */}
             <div className="relative">
-              {/* Sample athlete card mockup */}
               <div className="bg-white rounded-3xl shadow-xl p-6 border border-purple-100 max-w-sm mx-auto">
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5B21B6] to-[#7C3AED] flex items-center justify-center text-white font-bold text-2xl">
@@ -223,7 +246,8 @@ export default async function LandingPage() {
                 </div>
                 <div className="mt-4 p-3 bg-[#F5F3FF] rounded-xl">
                   <p className="text-xs text-gray-600">
-                    🏆 District level gold medalist 2024 · State U-17 camp participant
+                    🏆 District level gold medalist 2024 · State U-17 camp
+                    participant
                   </p>
                 </div>
               </div>
@@ -232,8 +256,60 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* Trust section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold text-[#111827]">
+              A platform you can trust
+            </h2>
+            <p className="mt-2 text-gray-500 text-sm max-w-xl mx-auto">
+              Juggernauts is committed to safe, ethical grassroots sports
+              development in Odisha
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              {
+                icon: <Shield className="w-5 h-5 text-[#5B21B6]" />,
+                title: "Section 8 Registered",
+                desc: "Juggernauts is a registered non-profit sports organisation focused on grassroots development.",
+              },
+              {
+                icon: <Lock className="w-5 h-5 text-[#5B21B6]" />,
+                title: "Safe Public Profiles",
+                desc: "Phone numbers, emails, and guardian details are never shown on public athlete profiles.",
+              },
+              {
+                icon: <Users className="w-5 h-5 text-[#5B21B6]" />,
+                title: "Guardian Consent",
+                desc: "Athletes under 18 require verified guardian consent before their profile is created.",
+              },
+              {
+                icon: <Trophy className="w-5 h-5 text-[#5B21B6]" />,
+                title: "Grassroots Focus",
+                desc: "Built for young athletes who lack access to scouting networks or structured sports pathways.",
+              },
+            ].map(({ icon, title, desc }) => (
+              <div
+                key={title}
+                className="bg-[#F8FAFC] rounded-2xl p-5 border border-gray-100"
+              >
+                <div className="bg-[#F3E8FF] rounded-xl w-10 h-10 flex items-center justify-center mb-3">
+                  {icon}
+                </div>
+                <h3 className="font-semibold text-gray-900 text-sm mb-1">
+                  {title}
+                </h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Districts coverage */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#F8FAFC]">
         <div className="max-w-4xl mx-auto text-center">
           <MapPin className="w-8 h-8 text-[#5B21B6] mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-[#111827]">
@@ -244,8 +320,16 @@ export default async function LandingPage() {
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-2">
             {[
-              "Khordha", "Cuttack", "Ganjam", "Puri", "Balasore",
-              "Sundergarh", "Sambalpur", "Kalahandi", "Koraput", "Mayurbhanj",
+              "Khordha",
+              "Cuttack",
+              "Ganjam",
+              "Puri",
+              "Balasore",
+              "Sundergarh",
+              "Sambalpur",
+              "Kalahandi",
+              "Koraput",
+              "Mayurbhanj",
               "+ 20 more districts",
             ].map((d) => (
               <span
@@ -267,20 +351,17 @@ export default async function LandingPage() {
         }}
       >
         <div className="max-w-2xl mx-auto text-center text-white">
-          <Trophy className="w-10 h-10 text-yellow-300 mx-auto mb-4" />
+          <Trophy className="w-10 h-10 text-purple-300 mx-auto mb-4" />
           <h2 className="text-3xl font-bold mb-4">
             Ready to claim your Athlete ID?
           </h2>
           <p className="text-purple-200 mb-8 leading-relaxed">
-            Join hundreds of grassroots athletes building their sports profiles.
-            Free registration, no documents needed to get started.
+            Join the early pilot and help build Odisha&apos;s grassroots sports
+            database. Free registration, no documents needed to get started.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register">
-              <Button
-                size="lg"
-                className="bg-yellow-400 hover:bg-yellow-300 text-[#3B0764] font-bold shadow-lg w-full sm:w-auto"
-              >
+              <Button size="lg" className="w-full sm:w-auto">
                 Create Athlete ID — Free
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -288,8 +369,8 @@ export default async function LandingPage() {
             <Link href="/events">
               <Button
                 size="lg"
-                variant="ghost"
-                className="text-white hover:bg-white/10 w-full sm:w-auto"
+                variant="outline"
+                className="border-white/60 text-white bg-white/10 hover:bg-white/20 w-full sm:w-auto"
               >
                 View Upcoming Events
               </Button>

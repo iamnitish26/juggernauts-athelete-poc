@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Menu, X, Trophy, ChevronDown } from "lucide-react";
 
 interface NavbarProps {
-  user?: { email?: string; role?: string } | null;
+  user?: { email?: string; role?: string; hasAthleteProfile?: boolean } | null;
 }
 
 export default function Navbar({ user }: NavbarProps) {
@@ -27,7 +27,16 @@ export default function Navbar({ user }: NavbarProps) {
       ? "/admin"
       : user?.role === "volunteer"
       ? "/volunteer"
+      : user?.hasAthleteProfile
+      ? "/athlete/dashboard"
       : "/athlete/register";
+
+  const dashboardLabel =
+    user?.role === "admin" || user?.role === "volunteer"
+      ? "Dashboard"
+      : user?.hasAthleteProfile
+      ? "My Profile"
+      : "Complete Profile";
 
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -64,7 +73,7 @@ export default function Navbar({ user }: NavbarProps) {
               <div className="flex items-center gap-3">
                 <Link href={dashboardHref}>
                   <Button variant="outline" size="sm">
-                    Dashboard
+                    {dashboardLabel}
                   </Button>
                 </Link>
                 <Button variant="ghost" size="sm" onClick={handleLogout}>
@@ -117,7 +126,7 @@ export default function Navbar({ user }: NavbarProps) {
             <>
               <Link href={dashboardHref} onClick={() => setMenuOpen(false)}>
                 <Button variant="outline" size="sm" className="w-full">
-                  Dashboard
+                  {dashboardLabel}
                 </Button>
               </Link>
               <Button

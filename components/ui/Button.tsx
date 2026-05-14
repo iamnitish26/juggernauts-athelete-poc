@@ -10,15 +10,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses = {
   primary:
-    "bg-[#5B21B6] hover:bg-[#4C1D95] text-white shadow-sm disabled:bg-[#8B5CF6]",
+    "bg-[#5B21B6] hover:bg-[#3B0764] active:bg-[#3B0764] text-white shadow-sm disabled:bg-[#8B5CF6]",
   secondary:
-    "bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-sm",
+    "bg-[#7C3AED] hover:bg-[#5B21B6] active:bg-[#5B21B6] text-white shadow-sm",
   outline:
-    "border-2 border-[#5B21B6] text-[#5B21B6] hover:bg-[#F5F3FF] bg-white",
+    "border-2 border-[#5B21B6] text-[#5B21B6] bg-white hover:bg-[#F3E8FF] active:bg-[#EDE9FE]",
   ghost:
-    "text-[#5B21B6] hover:bg-[#F5F3FF]",
+    "text-[#5B21B6] hover:bg-[#F3E8FF] active:bg-[#EDE9FE]",
   danger:
-    "bg-red-600 hover:bg-red-700 text-white shadow-sm",
+    "bg-red-600 hover:bg-red-700 active:bg-red-800 text-white shadow-sm",
 };
 
 const sizeClasses = {
@@ -53,11 +53,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {loading && (
-          <svg
-            className="animate-spin h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
+          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
             <circle
               className="opacity-25"
               cx="12"

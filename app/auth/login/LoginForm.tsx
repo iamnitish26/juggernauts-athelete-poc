@@ -15,7 +15,7 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirectTo") ?? "/";
+  const redirectTo = searchParams.get("redirectTo") ?? null;
   const supabase = createClient();
 
   async function handleLogin(e: React.FormEvent) {
@@ -47,7 +47,16 @@ export default function LoginForm() {
       } else if (profile?.role === "volunteer") {
         router.push("/volunteer");
       } else {
-        router.push(redirectTo);
+        if (redirectTo) {
+          router.push(redirectTo);
+        } else {
+          const { data: athlete } = await supabase
+            .from("athletes")
+            .select("athlete_id")
+            .eq("user_id", user.id)
+            .single();
+          router.push(athlete ? `/athlete/${athlete.athlete_id}` : "/athlete/register");
+        }
       }
       router.refresh();
     }
@@ -66,7 +75,9 @@ export default function LoginForm() {
             </span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Sign in to manage your Athlete ID, verify profiles, or manage events.
+          </p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
@@ -80,15 +91,25 @@ export default function LoginForm() {
               autoComplete="email"
               placeholder="you@example.com"
             />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              placeholder="••••••••"
-            />
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                placeholder="••••••••"
+              />
+              <div className="mt-1 text-right">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-xs text-[#5B21B6] hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
@@ -101,7 +122,12 @@ export default function LoginForm() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
+          <p className="mt-4 text-xs text-gray-500 text-center leading-relaxed">
+            Your private data is never shown publicly. We follow strict privacy
+            and data protection practices.
+          </p>
+
+          <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">
               Don&apos;t have an account?{" "}
               <Link
