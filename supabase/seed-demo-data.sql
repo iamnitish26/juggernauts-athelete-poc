@@ -13,6 +13,61 @@ alter table public.athletes add constraint athletes_profile_status_check
 -- Sports are already seeded by migration 003 — no insert needed here.
 
 -- ============================================================
+-- CLEANUP — remove any partial data from previous runs
+-- Deletes by athlete_id text so it works regardless of which UUID was used
+-- ============================================================
+
+delete from public.event_registrations
+  where athlete_id in (
+    'JG-OD-FB-2026-000001','JG-OD-FB-2026-000002','JG-OD-FB-2026-000003',
+    'JG-OD-FB-2026-000004','JG-OD-FB-2026-000005','JG-OD-FB-2026-000006',
+    'JG-OD-FB-2026-000007','JG-OD-FB-2026-000008',
+    'JG-OD-HK-2026-000001','JG-OD-HK-2026-000002','JG-OD-HK-2026-000003',
+    'JG-OD-HK-2026-000004','JG-OD-HK-2026-000005','JG-OD-HK-2026-000006',
+    'JG-OD-HK-2026-000007',
+    'JG-OD-AT-2026-000001','JG-OD-AT-2026-000002','JG-OD-AT-2026-000003',
+    'JG-OD-AT-2026-000004','JG-OD-AT-2026-000005',
+    'JG-OD-BD-2026-000001','JG-OD-BD-2026-000002',
+    'JG-OD-CK-2026-000001','JG-OD-CK-2026-000002','JG-OD-CK-2026-000003',
+    'JG-OD-CK-2026-000004',
+    'JG-OD-VB-2026-000001','JG-OD-VB-2026-000002','JG-OD-VB-2026-000003',
+    'JG-OD-KB-2026-000001','JG-OD-KB-2026-000002','JG-OD-KB-2026-000003',
+    'JG-OD-AR-2026-000001','JG-OD-AR-2026-000002',
+    'JG-OD-BB-2026-000001'
+  );
+
+delete from public.athletes
+  where athlete_id in (
+    'JG-OD-FB-2026-000001','JG-OD-FB-2026-000002','JG-OD-FB-2026-000003',
+    'JG-OD-FB-2026-000004','JG-OD-FB-2026-000005','JG-OD-FB-2026-000006',
+    'JG-OD-FB-2026-000007','JG-OD-FB-2026-000008',
+    'JG-OD-HK-2026-000001','JG-OD-HK-2026-000002','JG-OD-HK-2026-000003',
+    'JG-OD-HK-2026-000004','JG-OD-HK-2026-000005','JG-OD-HK-2026-000006',
+    'JG-OD-HK-2026-000007',
+    'JG-OD-AT-2026-000001','JG-OD-AT-2026-000002','JG-OD-AT-2026-000003',
+    'JG-OD-AT-2026-000004','JG-OD-AT-2026-000005',
+    'JG-OD-BD-2026-000001','JG-OD-BD-2026-000002',
+    'JG-OD-CK-2026-000001','JG-OD-CK-2026-000002','JG-OD-CK-2026-000003',
+    'JG-OD-CK-2026-000004',
+    'JG-OD-VB-2026-000001','JG-OD-VB-2026-000002','JG-OD-VB-2026-000003',
+    'JG-OD-KB-2026-000001','JG-OD-KB-2026-000002','JG-OD-KB-2026-000003',
+    'JG-OD-AR-2026-000001','JG-OD-AR-2026-000002',
+    'JG-OD-BB-2026-000001'
+  );
+
+delete from public.events
+  where id in (
+    'e0000001-0000-0000-0000-000000000000',
+    'e0000002-0000-0000-0000-000000000000',
+    'e0000003-0000-0000-0000-000000000000',
+    'e0000004-0000-0000-0000-000000000000',
+    'e0000005-0000-0000-0000-000000000000',
+    'e0000006-0000-0000-0000-000000000000',
+    'e0000007-0000-0000-0000-000000000000',
+    'e0000008-0000-0000-0000-000000000000'
+  );
+
+-- ============================================================
 -- ATHLETES — 35 demo profiles across states and sports
 --
 -- Status distribution:
