@@ -68,7 +68,7 @@ export default async function EventDetailPage({ params }: PageProps) {
     if (athlete) {
       const { data: reg } = await supabase
         .from("event_registrations")
-        .select("id, registration_status, payment_status, registered_at")
+        .select("id, registration_status, payment_status, registered_at, confirmed_at")
         .eq("event_id", id)
         .eq("athlete_profile_id", athlete.id)
         .single();
