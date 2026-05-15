@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import { CheckCircle, Clock, XCircle, Users } from "lucide-react";
 
 interface AthleteProfile {
   id: string;
@@ -13,13 +14,48 @@ interface AthleteProfile {
   verification_status: string;
 }
 
+interface ExistingRegistration {
+  id: string;
+  registration_status: string;
+  payment_status: string;
+  registered_at: string;
+}
+
 interface Props {
   eventId: string;
   eventName: string;
   registrationFee: number;
   user: { id: string } | null;
   athleteProfile: AthleteProfile | null;
+  existingRegistration?: ExistingRegistration | null;
 }
+
+const REGISTRATION_STATUS_UI: Record<string, { icon: React.ReactNode; label: string; color: string; bg: string }> = {
+  confirmed: {
+    icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+    label: "Registration Confirmed",
+    color: "text-green-800",
+    bg: "bg-green-50 border-green-200",
+  },
+  pending: {
+    icon: <Clock className="w-4 h-4 text-yellow-600" />,
+    label: "Registration Pending",
+    color: "text-yellow-800",
+    bg: "bg-yellow-50 border-yellow-200",
+  },
+  waitlisted: {
+    icon: <Users className="w-4 h-4 text-blue-600" />,
+    label: "On Waitlist",
+    color: "text-blue-800",
+    bg: "bg-blue-50 border-blue-200",
+  },
+  cancelled: {
+    icon: <XCircle className="w-4 h-4 text-gray-500" />,
+    label: "Registration Cancelled",
+    color: "text-gray-700",
+    bg: "bg-gray-50 border-gray-200",
+  },
+};
 
 export default function EventRegisterButton({
   eventId,
@@ -27,12 +63,15 @@ export default function EventRegisterButton({
   registrationFee,
   user,
   athleteProfile,
+  existingRegistration,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [newRegistration, setNewRegistration] = useState<ExistingRegistration | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  const activeReg = newRegistration ?? existingRegistration;
 
   async function handleRegister() {
     if (!user) {
@@ -49,15 +88,18 @@ export default function EventRegisterButton({
     setError("");
 
     // TODO: If registrationFee > 0, initiate Razorpay order before inserting registration
-    // const razorpayOrder = await createRazorpayOrder(registrationFee);
-    // Then open Razorpay checkout and on success, insert with payment_status: 'paid'
 
-    const { error: insertError } = await supabase.from("event_registrations").insert({
-      event_id: eventId,
-      athlete_profile_id: athleteProfile.id,
-      athlete_id: athleteProfile.athlete_id,
-      payment_status: registrationFee > 0 ? "pending" : "waived",
-    });
+    const { data, error: insertError } = await supabase
+      .from("event_registrations")
+      .insert({
+        event_id: eventId,
+        athlete_profile_id: athleteProfile.id,
+        athlete_id: athleteProfile.athlete_id,
+        payment_status: registrationFee > 0 ? "pending" : "waived",
+        registration_status: "confirmed",
+      })
+      .select("id, registration_status, payment_status, registered_at")
+      .single();
 
     if (insertError) {
       if (insertError.code === "23505") {
@@ -69,22 +111,37 @@ export default function EventRegisterButton({
       return;
     }
 
-    setSuccess(true);
+    setNewRegistration(data);
     setLoading(false);
     router.refresh();
   }
 
-  if (success) {
+  // Show existing registration status
+  if (activeReg && activeReg.registration_status !== "cancelled") {
+    const ui = REGISTRATION_STATUS_UI[activeReg.registration_status] ?? REGISTRATION_STATUS_UI.confirmed;
     return (
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-        <p className="text-green-800 font-semibold text-sm">
-          ✓ Successfully registered!
-        </p>
-        <p className="text-green-700 text-xs mt-1">
-          {registrationFee > 0
-            ? "Payment is pending. We'll contact you with payment details."
-            : "See you at the event!"}
-        </p>
+      <div className={`border rounded-xl p-4 ${ui.bg}`}>
+        <div className="flex items-center gap-2 mb-1">
+          {ui.icon}
+          <span className={`font-semibold text-sm ${ui.color}`}>{ui.label}</span>
+        </div>
+        {activeReg.registration_status === "confirmed" && (
+          <p className={`text-xs mt-1 ${ui.color}`}>
+            {registrationFee > 0
+              ? "Payment is pending — we'll reach out with payment details."
+              : "You're all set! See you at the event."}
+          </p>
+        )}
+        {activeReg.registration_status === "waitlisted" && (
+          <p className={`text-xs mt-1 ${ui.color}`}>
+            We'll notify you if a spot opens up.
+          </p>
+        )}
+        {activeReg.registration_status === "pending" && (
+          <p className={`text-xs mt-1 ${ui.color}`}>
+            Your registration is being reviewed.
+          </p>
+        )}
       </div>
     );
   }
