@@ -14,16 +14,16 @@ alter table public.athletes add constraint athletes_profile_status_check
 -- SPORTS (upsert core sports used by demo athletes)
 -- ============================================================
 insert into public.sports (id, name, code, is_active) values
-  ('s0000001-0000-0000-0000-000000000000', 'Football',   'FB', true),
-  ('s0000002-0000-0000-0000-000000000000', 'Hockey',     'HK', true),
-  ('s0000003-0000-0000-0000-000000000000', 'Athletics',  'AT', true),
-  ('s0000004-0000-0000-0000-000000000000', 'Badminton',  'BD', true),
-  ('s0000005-0000-0000-0000-000000000000', 'Cricket',    'CK', true),
-  ('s0000006-0000-0000-0000-000000000000', 'Volleyball', 'VB', true),
-  ('s0000007-0000-0000-0000-000000000000', 'Kabaddi',    'KB', true),
-  ('s0000008-0000-0000-0000-000000000000', 'Archery',    'AR', true),
-  ('s0000009-0000-0000-0000-000000000000', 'Swimming',   'SW', true),
-  ('s0000010-0000-0000-0000-000000000000', 'Basketball', 'BB', true)
+  ('b0000001-0000-0000-0000-000000000000', 'Football',   'FB', true),
+  ('b0000002-0000-0000-0000-000000000000', 'Hockey',     'HK', true),
+  ('b0000003-0000-0000-0000-000000000000', 'Athletics',  'AT', true),
+  ('b0000004-0000-0000-0000-000000000000', 'Badminton',  'BD', true),
+  ('b0000005-0000-0000-0000-000000000000', 'Cricket',    'CK', true),
+  ('b0000006-0000-0000-0000-000000000000', 'Volleyball', 'VB', true),
+  ('b0000007-0000-0000-0000-000000000000', 'Kabaddi',    'KB', true),
+  ('b0000008-0000-0000-0000-000000000000', 'Archery',    'AR', true),
+  ('b0000009-0000-0000-0000-000000000000', 'Swimming',   'SW', true),
+  ('b0000010-0000-0000-0000-000000000000', 'Basketball', 'BB', true)
 on conflict (code) do nothing;
 
 -- ============================================================
@@ -740,7 +740,7 @@ insert into public.event_registrations (
 
 -- Rahul Majhi (approved, event_verified) — confirmed + paid
 (
-  'r0000001-0000-0000-0000-000000000000',
+  'c0000001-0000-0000-0000-000000000000',
   'e0000001-0000-0000-0000-000000000000',
   'a0000001-0000-0000-0000-000000000000', 'JG-OD-FB-2026-000001',
   'confirmed', 'paid',
@@ -750,7 +750,7 @@ insert into public.event_registrations (
 ),
 -- Bikram Soren (approved, community_verified) — confirmed + paid
 (
-  'r0000002-0000-0000-0000-000000000000',
+  'c0000002-0000-0000-0000-000000000000',
   'e0000001-0000-0000-0000-000000000000',
   'a0000005-0000-0000-0000-000000000000', 'JG-OD-FB-2026-000002',
   'confirmed', 'paid',
@@ -760,7 +760,7 @@ insert into public.event_registrations (
 ),
 -- Binod Sahani (approved, assisted by coach) — confirmed + paid
 (
-  'r0000003-0000-0000-0000-000000000000',
+  'c0000003-0000-0000-0000-000000000000',
   'e0000001-0000-0000-0000-000000000000',
   'a0000028-0000-0000-0000-000000000000', 'JG-OD-FB-2026-000007',
   'confirmed', 'paid',
@@ -770,7 +770,7 @@ insert into public.event_registrations (
 ),
 -- Dilip Munda (pending profile, community_verified) — pending payment
 (
-  'r0000004-0000-0000-0000-000000000000',
+  'c0000004-0000-0000-0000-000000000000',
   'e0000001-0000-0000-0000-000000000000',
   'a0000011-0000-0000-0000-000000000000', 'JG-OD-FB-2026-000003',
   'pending', 'pending',
@@ -780,7 +780,7 @@ insert into public.event_registrations (
 ),
 -- Jayanti Jena (pending profile, assisted by admin) — pending
 (
-  'r0000005-0000-0000-0000-000000000000',
+  'c0000005-0000-0000-0000-000000000000',
   'e0000001-0000-0000-0000-000000000000',
   'a0000026-0000-0000-0000-000000000000', 'JG-OD-FB-2026-000006',
   'pending', 'pending',
@@ -793,7 +793,7 @@ insert into public.event_registrations (
 
 -- Priya Lakra (approved, event_verified) — confirmed, not_required
 (
-  'r0000006-0000-0000-0000-000000000000',
+  'c0000006-0000-0000-0000-000000000000',
   'e0000002-0000-0000-0000-000000000000',
   'a0000002-0000-0000-0000-000000000000', 'JG-OD-HK-2026-000001',
   'confirmed', 'not_required',
@@ -803,7 +803,7 @@ insert into public.event_registrations (
 ),
 -- Deepa Hansdah (approved, community_verified) — confirmed, not_required
 (
-  'r0000007-0000-0000-0000-000000000000',
+  'c0000007-0000-0000-0000-000000000000',
   'e0000002-0000-0000-0000-000000000000',
   'a0000006-0000-0000-0000-000000000000', 'JG-OD-HK-2026-000002',
   'confirmed', 'not_required',
@@ -813,7 +813,7 @@ insert into public.event_registrations (
 ),
 -- Pushpa Kerketta (approved, assisted by volunteer) — confirmed, not_required
 (
-  'r0000008-0000-0000-0000-000000000000',
+  'c0000008-0000-0000-0000-000000000000',
   'e0000002-0000-0000-0000-000000000000',
   'a0000029-0000-0000-0000-000000000000', 'JG-OD-HK-2026-000006',
   'confirmed', 'not_required',
@@ -823,7 +823,7 @@ insert into public.event_registrations (
 ),
 -- Sarita Topno (pending profile) — pending, not_required
 (
-  'r0000009-0000-0000-0000-000000000000',
+  'c0000009-0000-0000-0000-000000000000',
   'e0000002-0000-0000-0000-000000000000',
   'a0000017-0000-0000-0000-000000000000', 'JG-OD-HK-2026-000004',
   'pending', 'not_required',
