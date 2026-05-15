@@ -36,13 +36,14 @@ function getInitials(name: string): string {
 export async function generateMetadata({ params }: PageProps) {
   const { athleteId } = await params;
   const supabase = await createClient();
+  // Use the safe view — only approved + public + active profiles are returned
   const { data } = await supabase
-    .from("athletes")
-    .select("full_name, primary_sport, district, profile_status, is_public")
+    .from("public_athlete_profiles")
+    .select("full_name, primary_sport, district")
     .eq("athlete_id", athleteId)
     .single();
 
-  if (!data || data.profile_status !== "approved" || !data.is_public) {
+  if (!data) {
     return {
       title: "Athlete Profile | Juggernauts Athlete ID",
     };
@@ -62,19 +63,12 @@ export default async function AthleteProfilePage({ params }: PageProps) {
   const { athleteId } = await params;
   const supabase = await createClient();
 
-  // Fetch public-safe fields only — never expose phone, email, guardian, exact DOB
-  // profile_status and is_public are needed to enforce visibility logic
+  // Query the public-safe view — never expose phone, email, DOB, guardian, or source contacts.
+  // The view enforces: is_active=true, is_public=true, profile_status='approved',
+  // and gates profile_photo_url on photo_consent.
   const { data: athlete } = await supabase
-    .from("athletes")
-    .select(
-      `
-      athlete_id, full_name, profile_photo_url, photo_consent,
-      primary_sport, position_event_category, district, state,
-      age_group, current_club_school, achievement_summary,
-      verification_status, instagram_link, video_link,
-      is_active, created_at, profile_status, is_public
-    `
-    )
+    .from("public_athlete_profiles")
+    .select("*")
     .eq("athlete_id", athleteId)
     .single();
 
@@ -92,20 +86,8 @@ export default async function AthleteProfilePage({ params }: PageProps) {
     navUser = { email: user.email, role: profile?.role };
   }
 
-  // Show "not available" when:
-  //   - athlete not found (ID doesn't exist, or RLS blocks it for non-owner)
-  //   - profile_status is not approved (treat missing column as backwards-compat approved)
-  //   - is_public is false (treat missing column as backwards-compat true)
-  const isApproved =
-    !athlete ||
-    (athlete.profile_status !== undefined
-      ? athlete.profile_status === "approved"
-      : true);
-  const isPublic =
-    !athlete ||
-    (athlete.is_public !== undefined ? athlete.is_public === true : true);
-
-  if (!athlete || !isApproved || !isPublic) {
+  // View returns null for any profile that isn't approved + public + active
+  if (!athlete) {
     return (
       <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
         <Navbar user={navUser} />
@@ -134,12 +116,14 @@ export default async function AthleteProfilePage({ params }: PageProps) {
     );
   }
 
-  const memberSince = new Date(athlete.created_at).getFullYear();
+  // member_since is created_at aliased by the view
+  const memberSince = new Date(athlete.member_since).getFullYear();
   const initials = getInitials(athlete.full_name);
   const profileUrl = `${
     process.env.NEXT_PUBLIC_APP_URL ?? ""
   }/athlete/${athleteId}`;
-  const showPhoto = !!(athlete.profile_photo_url && athlete.photo_consent);
+  // The view already gates profile_photo_url on photo_consent — non-null means consented
+  const showPhoto = !!athlete.profile_photo_url;
   const verificationExplanation =
     VERIFICATION_EXPLANATIONS[athlete.verification_status] ?? "";
 
@@ -340,7 +324,7 @@ export default async function AthleteProfilePage({ params }: PageProps) {
               verificationStatus={athlete.verification_status}
               initials={initials}
               photoUrl={athlete.profile_photo_url}
-              photoConsent={athlete.photo_consent}
+              photoConsent={showPhoto}
             />
           </div>
 
