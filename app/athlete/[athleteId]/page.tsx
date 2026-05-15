@@ -36,14 +36,13 @@ function getInitials(name: string): string {
 export async function generateMetadata({ params }: PageProps) {
   const { athleteId } = await params;
   const supabase = await createClient();
-  // Use the safe view — only approved + public + active profiles are returned
   const { data } = await supabase
-    .from("public_athlete_profiles")
-    .select("full_name, primary_sport, district")
+    .from("athletes")
+    .select("full_name, primary_sport, district, profile_status, is_public")
     .eq("athlete_id", athleteId)
     .single();
 
-  if (!data) {
+  if (!data || data.profile_status !== "approved" || !data.is_public) {
     return {
       title: "Athlete Profile | Juggernauts Athlete ID",
     };
@@ -63,14 +62,30 @@ export default async function AthleteProfilePage({ params }: PageProps) {
   const { athleteId } = await params;
   const supabase = await createClient();
 
-  // Query the public-safe view — never expose phone, email, DOB, guardian, or source contacts.
-  // The view enforces: is_active=true, is_public=true, profile_status='approved',
-  // and gates profile_photo_url on photo_consent.
-  const { data: athlete } = await supabase
-    .from("public_athlete_profiles")
-    .select("*")
+  // Fetch public-safe fields only — never expose phone, email, guardian, exact DOB
+  // profile_status and is_public are needed to enforce visibility logic
+  const { data: athlete, error: athleteQueryError } = await supabase
+    .from("athletes")
+    .select(
+      `
+      athlete_id, full_name, profile_photo_url, photo_consent,
+      primary_sport, position_event_category, district, state,
+      age_group, current_club_school, achievement_summary,
+      verification_status, instagram_link, video_link,
+      is_active, created_at, profile_status, is_public
+    `
+    )
     .eq("athlete_id", athleteId)
     .single();
+
+  // PGRST116 = "no rows returned" (profile doesn't exist or RLS blocked it) — expected
+  // Any other error = real DB problem (missing column, schema mismatch, etc.)
+  if (athleteQueryError && athleteQueryError.code !== "PGRST116") {
+    console.error(
+      `[athlete/${athleteId}] DB query error — code: ${athleteQueryError.code}, message: ${athleteQueryError.message}. ` +
+        "Check that all migrations (001–009) have been applied in Supabase SQL Editor."
+    );
+  }
 
   const {
     data: { user },
@@ -86,8 +101,32 @@ export default async function AthleteProfilePage({ params }: PageProps) {
     navUser = { email: user.email, role: profile?.role };
   }
 
-  // View returns null for any profile that isn't approved + public + active
-  if (!athlete) {
+  // Show "not available" when:
+  //   - athlete not found (ID doesn't exist, or RLS blocks it for non-owner)
+  //   - profile_status is not approved (treat missing column as backwards-compat approved)
+  //   - is_public is false (treat missing column as backwards-compat true)
+  const isApproved =
+    !athlete ||
+    (athlete.profile_status !== undefined
+      ? athlete.profile_status === "approved"
+      : true);
+  const isPublic =
+    !athlete ||
+    (athlete.is_public !== undefined ? athlete.is_public === true : true);
+
+  if (!athlete || !isApproved || !isPublic) {
+    const isAdminViewing = navUser?.role === "admin";
+    // Admin-only debug hint: shows why the profile is hidden without exposing data to public
+    const adminHint = isAdminViewing
+      ? !athlete
+        ? athleteQueryError && athleteQueryError.code !== "PGRST116"
+          ? "A database error occurred. Ensure all migrations (001–009) have been applied in Supabase SQL Editor."
+          : "No profile found for this Athlete ID — it may not exist or RLS is blocking the read."
+        : !isApproved
+        ? `Profile exists but profile_status = "${athlete.profile_status}". Click Approve Public Profile in the admin panel.`
+        : `Profile exists but is_public = false. Click Approve Public Profile in the admin panel.`
+      : null;
+
     return (
       <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
         <Navbar user={navUser} />
@@ -103,6 +142,11 @@ export default async function AthleteProfilePage({ params }: PageProps) {
               This Athlete ID profile is not publicly available. It may be
               pending review or has not been approved yet.
             </p>
+            {adminHint && (
+              <div className="mb-6 text-left text-xs bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-yellow-800">
+                <span className="font-bold">Admin debug:</span> {adminHint}
+              </div>
+            )}
             <Link
               href="/events"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -116,14 +160,12 @@ export default async function AthleteProfilePage({ params }: PageProps) {
     );
   }
 
-  // member_since is created_at aliased by the view
-  const memberSince = new Date(athlete.member_since).getFullYear();
+  const memberSince = new Date(athlete.created_at).getFullYear();
   const initials = getInitials(athlete.full_name);
   const profileUrl = `${
     process.env.NEXT_PUBLIC_APP_URL ?? ""
   }/athlete/${athleteId}`;
-  // The view already gates profile_photo_url on photo_consent — non-null means consented
-  const showPhoto = !!athlete.profile_photo_url;
+  const showPhoto = !!(athlete.profile_photo_url && athlete.photo_consent);
   const verificationExplanation =
     VERIFICATION_EXPLANATIONS[athlete.verification_status] ?? "";
 
@@ -324,7 +366,7 @@ export default async function AthleteProfilePage({ params }: PageProps) {
               verificationStatus={athlete.verification_status}
               initials={initials}
               photoUrl={athlete.profile_photo_url}
-              photoConsent={showPhoto}
+              photoConsent={athlete.photo_consent}
             />
           </div>
 

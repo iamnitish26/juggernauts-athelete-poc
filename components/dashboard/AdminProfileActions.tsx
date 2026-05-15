@@ -65,13 +65,30 @@ export default function AdminProfileActions({
       patch.is_public = false;
     }
 
-    const { error: updateError } = await supabase
+    const { data: updated, error: updateError } = await supabase
       .from("athletes")
       .update(patch)
-      .eq("id", athleteDbId);
+      .eq("id", athleteDbId)
+      .select("id");
 
     if (updateError) {
-      setError(updateError.message);
+      // Constraint violation when 'inactive' status is not yet in the DB schema
+      if (updateError.code === "23514") {
+        setError(
+          "Cannot set this status — the database schema needs to be updated first. Run migration 009 in Supabase SQL Editor."
+        );
+      } else {
+        setError(updateError.message);
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (!updated || updated.length === 0) {
+      setError(
+        "Update failed — 0 rows changed. Your account may not have admin permissions in the database. " +
+          "Check that your user profile has role = 'admin' in the Supabase profiles table, or contact your Supabase admin."
+      );
       setLoading(false);
       return;
     }
