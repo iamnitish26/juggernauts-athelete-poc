@@ -822,7 +822,7 @@ insert into public.event_registrations (
 
 -- Suresh Nayak (approved) — confirmed, not_required
 (
-  'r0000010-0000-0000-0000-000000000000',
+  'c0000010-0000-0000-0000-000000000000',
   'e0000003-0000-0000-0000-000000000000',
   'a0000003-0000-0000-0000-000000000000', 'JG-OD-AT-2026-000001',
   'confirmed', 'not_required',
@@ -832,7 +832,7 @@ insert into public.event_registrations (
 ),
 -- Kavita Minz (pending, community_verified) — pending, not_required
 (
-  'r0000011-0000-0000-0000-000000000000',
+  'c0000011-0000-0000-0000-000000000000',
   'e0000003-0000-0000-0000-000000000000',
   'a0000012-0000-0000-0000-000000000000', 'JG-OD-AT-2026-000002',
   'pending', 'not_required',
@@ -842,7 +842,7 @@ insert into public.event_registrations (
 ),
 -- Anita Sahoo (pending, assisted by volunteer) — pending, not_required
 (
-  'r0000012-0000-0000-0000-000000000000',
+  'c0000012-0000-0000-0000-000000000000',
   'e0000003-0000-0000-0000-000000000000',
   'a0000022-0000-0000-0000-000000000000', 'JG-OD-AT-2026-000004',
   'pending', 'not_required',
@@ -855,7 +855,7 @@ insert into public.event_registrations (
 
 -- Anjali Patra (approved, event_verified) — confirmed + paid
 (
-  'r0000013-0000-0000-0000-000000000000',
+  'c0000013-0000-0000-0000-000000000000',
   'e0000004-0000-0000-0000-000000000000',
   'a0000004-0000-0000-0000-000000000000', 'JG-OD-BD-2026-000001',
   'confirmed', 'paid',
@@ -865,7 +865,7 @@ insert into public.event_registrations (
 ),
 -- Pranab Giri (pending profile) — pending payment
 (
-  'r0000014-0000-0000-0000-000000000000',
+  'c0000014-0000-0000-0000-000000000000',
   'e0000004-0000-0000-0000-000000000000',
   'a0000015-0000-0000-0000-000000000000', 'JG-OD-BD-2026-000002',
   'pending', 'pending',
@@ -878,7 +878,7 @@ insert into public.event_registrations (
 
 -- Raju Behera (approved) — pending (event is draft, no payment yet)
 (
-  'r0000015-0000-0000-0000-000000000000',
+  'c0000015-0000-0000-0000-000000000000',
   'e0000005-0000-0000-0000-000000000000',
   'a0000007-0000-0000-0000-000000000000', 'JG-OD-CK-2026-000001',
   'pending', 'pending',
@@ -888,7 +888,7 @@ insert into public.event_registrations (
 ),
 -- Rakesh Mandal (approved, assisted by admin) — pending
 (
-  'r0000016-0000-0000-0000-000000000000',
+  'c0000016-0000-0000-0000-000000000000',
   'e0000005-0000-0000-0000-000000000000',
   'a0000033-0000-0000-0000-000000000000', 'JG-OD-CK-2026-000004',
   'pending', 'pending',
@@ -901,7 +901,7 @@ insert into public.event_registrations (
 
 -- Sunita Pradhan (approved) — confirmed, not_required [event closed]
 (
-  'r0000017-0000-0000-0000-000000000000',
+  'c0000017-0000-0000-0000-000000000000',
   'e0000006-0000-0000-0000-000000000000',
   'a0000008-0000-0000-0000-000000000000', 'JG-OD-VB-2026-000001',
   'confirmed', 'not_required',
@@ -911,7 +911,7 @@ insert into public.event_registrations (
 ),
 -- Soumya Pradhan (approved, assisted by captain) — confirmed, not_required
 (
-  'r0000018-0000-0000-0000-000000000000',
+  'c0000018-0000-0000-0000-000000000000',
   'e0000006-0000-0000-0000-000000000000',
   'a0000034-0000-0000-0000-000000000000', 'JG-OD-VB-2026-000003',
   'confirmed', 'not_required',
@@ -921,7 +921,7 @@ insert into public.event_registrations (
 ),
 -- Kumar Biswal (pending, assisted by coach) — cancelled [withdrew]
 (
-  'r0000019-0000-0000-0000-000000000000',
+  'c0000019-0000-0000-0000-000000000000',
   'e0000006-0000-0000-0000-000000000000',
   'a0000023-0000-0000-0000-000000000000', 'JG-OD-VB-2026-000002',
   'cancelled', 'not_required',
@@ -934,7 +934,7 @@ insert into public.event_registrations (
 
 -- Laxmi Murmu (approved, event_verified) — confirmed, not_required
 (
-  'r0000020-0000-0000-0000-000000000000',
+  'c0000020-0000-0000-0000-000000000000',
   'e0000007-0000-0000-0000-000000000000',
   'a0000010-0000-0000-0000-000000000000', 'JG-OD-AR-2026-000001',
   'confirmed', 'not_required',
@@ -944,7 +944,7 @@ insert into public.event_registrations (
 ),
 -- Reena Panda (pending, assisted by captain) — pending, not_required
 (
-  'r0000021-0000-0000-0000-000000000000',
+  'c0000021-0000-0000-0000-000000000000',
   'e0000007-0000-0000-0000-000000000000',
   'a0000024-0000-0000-0000-000000000000', 'JG-OD-KB-2026-000002',
   'pending', 'not_required',
@@ -957,7 +957,7 @@ insert into public.event_registrations (
 
 -- Manoj Tudu (approved, event_verified) — confirmed + paid [attended]
 (
-  'r0000022-0000-0000-0000-000000000000',
+  'c0000022-0000-0000-0000-000000000000',
   'e0000008-0000-0000-0000-000000000000',
   'a0000009-0000-0000-0000-000000000000', 'JG-OD-KB-2026-000001',
   'confirmed', 'paid',
@@ -967,7 +967,7 @@ insert into public.event_registrations (
 ),
 -- Hemant Nag (approved, assisted by volunteer) — confirmed + paid
 (
-  'r0000023-0000-0000-0000-000000000000',
+  'c0000023-0000-0000-0000-000000000000',
   'e0000008-0000-0000-0000-000000000000',
   'a0000035-0000-0000-0000-000000000000', 'JG-OD-KB-2026-000003',
   'confirmed', 'paid',
@@ -977,7 +977,7 @@ insert into public.event_registrations (
 ),
 -- Reena Panda (pending, in kabaddi) — confirmed + paid [different event from archery reg]
 (
-  'r0000024-0000-0000-0000-000000000000',
+  'c0000024-0000-0000-0000-000000000000',
   'e0000008-0000-0000-0000-000000000000',
   'a0000024-0000-0000-0000-000000000000', 'JG-OD-KB-2026-000002',
   'confirmed', 'paid',
@@ -987,7 +987,7 @@ insert into public.event_registrations (
 ),
 -- Biren Naik (pending profile, football) — failed payment
 (
-  'r0000025-0000-0000-0000-000000000000',
+  'c0000025-0000-0000-0000-000000000000',
   'e0000001-0000-0000-0000-000000000000',
   'a0000016-0000-0000-0000-000000000000', 'JG-OD-FB-2026-000004',
   'failed', 'failed',
