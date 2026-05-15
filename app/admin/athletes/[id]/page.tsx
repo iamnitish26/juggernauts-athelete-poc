@@ -12,6 +12,9 @@ import {
   ExternalLink,
   Lock,
   User,
+  Globe,
+  EyeOff,
+  Info,
 } from "lucide-react";
 
 interface PageProps {
@@ -141,18 +144,97 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
             {PROFILE_STATUS_LABEL[athlete.profile_status ?? "pending"] ?? athlete.profile_status}
           </span>
           <VerificationBadge status={athlete.verification_status} />
-          {isProfileApproved && (
-            <Link
-              href={`/athlete/${athlete.athlete_id}`}
-              target="_blank"
-              className="inline-flex items-center gap-1 text-xs text-[#5B21B6] hover:underline font-medium"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              View Public Profile
-            </Link>
-          )}
         </div>
       </div>
+
+      {/* ── Status Overview ────────────────────────────────────────── */}
+      <div className="mb-6 rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        <div className="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+          {/* Public profile status */}
+          <div className="pb-4 sm:pb-0 sm:pr-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" />
+              Public Profile Status
+            </p>
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className={`text-sm font-semibold px-2.5 py-1 rounded-full border ${
+                  PROFILE_STATUS_COLOR[athlete.profile_status ?? "pending"] ??
+                  "bg-gray-100 text-gray-600 border-gray-200"
+                }`}
+              >
+                {PROFILE_STATUS_LABEL[athlete.profile_status ?? "pending"] ?? athlete.profile_status}
+              </span>
+              {isProfileApproved && (
+                <Link
+                  href={`/athlete/${athlete.athlete_id}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1 text-xs text-[#5B21B6] hover:underline font-medium"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  View live profile
+                </Link>
+              )}
+            </div>
+            {isProfileApproved ? (
+              <p className="text-xs text-green-700 flex items-center gap-1">
+                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                Public profile is live and visible to anyone.
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 flex items-center gap-1">
+                <EyeOff className="w-3.5 h-3.5 shrink-0" />
+                Public profile is currently hidden.
+              </p>
+            )}
+          </div>
+
+          {/* Verification status */}
+          <div className="pt-4 sm:pt-0 sm:pl-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
+              Verification Status
+            </p>
+            <div className="mb-1">
+              <VerificationBadge status={athlete.verification_status} />
+            </div>
+            <p className="text-xs text-gray-500">
+              Controls the trust badge shown on the public profile.
+            </p>
+          </div>
+        </div>
+
+        {/* Contextual banner */}
+        {!isProfileApproved &&
+          (athlete.verification_status === "community_verified" ||
+            athlete.verification_status === "event_verified") && (
+            <div className="border-t border-amber-200 bg-amber-50 px-5 py-3 flex items-start gap-2.5 text-sm text-amber-800">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <span>
+                <span className="font-semibold">Verification is not the same as publishing.</span>{" "}
+                This profile is{" "}
+                {athlete.verification_status === "community_verified"
+                  ? "Community Verified"
+                  : "Event Verified"}{" "}
+                but the public profile is still hidden. To make it visible, use{" "}
+                <span className="font-semibold">Approve Public Profile</span> in the Profile Actions
+                section below.
+              </span>
+            </div>
+          )}
+
+        {!isProfileApproved &&
+          athlete.verification_status === "self_registered" &&
+          athlete.profile_status === "pending" && (
+            <div className="border-t border-gray-100 bg-gray-50 px-5 py-3 flex items-start gap-2.5 text-sm text-gray-600">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-gray-400" />
+              <span>
+                Profile is pending review. You can optionally verify the athlete first, then use{" "}
+                <span className="font-semibold">Approve Public Profile</span> to publish it.
+              </span>
+            </div>
+          )}
+      </div>
+      {/* ── End Status Overview ─────────────────────────────────────── */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Personal details */}
@@ -370,11 +452,15 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         {/* Profile actions */}
-        <Card>
+        <Card className={!isProfileApproved ? "ring-2 ring-[#5B21B6]/20 border-[#5B21B6]/30" : ""}>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Profile Actions</h2>
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-[#5B21B6]" />
+              <h2 className="font-semibold text-gray-900">Profile Actions</h2>
+            </div>
             <p className="text-xs text-gray-500 mt-0.5">
-              Controls whether this profile is publicly visible
+              Controls whether this profile is <strong>publicly visible</strong>. Separate from
+              verification.
             </p>
           </CardHeader>
           <CardBody>
@@ -423,7 +509,10 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
           <CardHeader>
             <h2 className="font-semibold text-gray-900">Verification Actions</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Controls the trust badge shown on the public profile
+              Controls the trust badge only.{" "}
+              <span className="font-semibold text-amber-700">
+                Does not publish the profile.
+              </span>
             </p>
           </CardHeader>
           <CardBody>
