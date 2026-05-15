@@ -89,7 +89,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 7. Create Razorpay order (amount in paise)
-    const razorpay = getRazorpay();
+    let razorpay;
+    try {
+      razorpay = getRazorpay();
+    } catch {
+      return NextResponse.json(
+        { error: "Payment is not configured for this platform yet. Please contact the organiser." },
+        { status: 503 }
+      );
+    }
     const amountPaise = Math.round(event.registration_fee * 100);
     const order = await razorpay.orders.create({
       amount: amountPaise,
