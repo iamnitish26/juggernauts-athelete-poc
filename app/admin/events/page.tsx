@@ -76,13 +76,21 @@ export default async function AdminEventsPage() {
                     />
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/events/${event.id}`}
-                      target="_blank"
-                      className="text-xs text-[#5B21B6] hover:underline font-medium"
-                    >
-                      View
-                    </Link>
+                    <div className="flex gap-3">
+                      <Link
+                        href={`/admin/events/${event.id}`}
+                        className="text-xs text-[#5B21B6] hover:underline font-medium"
+                      >
+                        Registrations
+                      </Link>
+                      <Link
+                        href={`/events/${event.id}`}
+                        target="_blank"
+                        className="text-xs text-gray-400 hover:underline"
+                      >
+                        Public ↗
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}
