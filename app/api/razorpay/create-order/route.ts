@@ -1,15 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import Razorpay from "razorpay";
 import { createClient } from "@/lib/supabase/server";
 
-function getRazorpay() {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-    throw new Error("Razorpay credentials not configured");
+// Creates a Razorpay order via REST API — no npm package required
+async function createRazorpayOrder(params: {
+  amount: number;
+  currency: string;
+  receipt: string;
+  notes: Record<string, string>;
+}) {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+  if (!keyId || !keySecret) {
+    return { error: "not_configured" as const };
   }
-  return new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
+
+  const credentials = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+
+  const res = await fetch("https://api.razorpay.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(params),
   });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    return { error: "razorpay_error" as const, details: body };
+  }
+
+  const order = await res.json();
+  return { order };
 }
 
 export async function POST(req: NextRequest) {
@@ -88,18 +111,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Already registered for this event" }, { status: 409 });
     }
 
-    // 7. Create Razorpay order (amount in paise)
-    let razorpay;
-    try {
-      razorpay = getRazorpay();
-    } catch {
-      return NextResponse.json(
-        { error: "Payment is not configured for this platform yet. Please contact the organiser." },
-        { status: 503 }
-      );
-    }
+    // 7. Create Razorpay order via REST API (amount in paise)
     const amountPaise = Math.round(event.registration_fee * 100);
-    const order = await razorpay.orders.create({
+    const result = await createRazorpayOrder({
       amount: amountPaise,
       currency: "INR",
       receipt: `reg_${athlete.id.slice(0, 8)}_${eventId.slice(0, 8)}`,
@@ -110,6 +124,20 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
       },
     });
+
+    if (result.error === "not_configured") {
+      return NextResponse.json(
+        { error: "Payment is not configured for this platform yet. Please contact the organiser." },
+        { status: 503 }
+      );
+    }
+
+    if (result.error === "razorpay_error" || !result.order) {
+      console.error("[create-order] Razorpay API error:", result.details);
+      return NextResponse.json({ error: "Failed to create payment order" }, { status: 502 });
+    }
+
+    const order = result.order;
 
     // 8. Upsert a pending registration row so we can track state
     const regPayload = {
@@ -124,7 +152,6 @@ export async function POST(req: NextRequest) {
     };
 
     if (existing) {
-      // Reuse existing row — update with new order id
       await supabase
         .from("event_registrations")
         .update({
