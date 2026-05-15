@@ -10,21 +10,7 @@ alter table public.athletes drop constraint if exists athletes_profile_status_ch
 alter table public.athletes add constraint athletes_profile_status_check
   check (profile_status in ('pending', 'approved', 'rejected', 'inactive'));
 
--- ============================================================
--- SPORTS (upsert core sports used by demo athletes)
--- ============================================================
-insert into public.sports (id, name, code, is_active) values
-  ('b0000001-0000-0000-0000-000000000000', 'Football',   'FB', true),
-  ('b0000002-0000-0000-0000-000000000000', 'Hockey',     'HK', true),
-  ('b0000003-0000-0000-0000-000000000000', 'Athletics',  'AT', true),
-  ('b0000004-0000-0000-0000-000000000000', 'Badminton',  'BD', true),
-  ('b0000005-0000-0000-0000-000000000000', 'Cricket',    'CK', true),
-  ('b0000006-0000-0000-0000-000000000000', 'Volleyball', 'VB', true),
-  ('b0000007-0000-0000-0000-000000000000', 'Kabaddi',    'KB', true),
-  ('b0000008-0000-0000-0000-000000000000', 'Archery',    'AR', true),
-  ('b0000009-0000-0000-0000-000000000000', 'Swimming',   'SW', true),
-  ('b0000010-0000-0000-0000-000000000000', 'Basketball', 'BB', true)
-on conflict (code) do nothing;
+-- Sports are already seeded by migration 003 — no insert needed here.
 
 -- ============================================================
 -- ATHLETES — 35 demo profiles across states and sports
