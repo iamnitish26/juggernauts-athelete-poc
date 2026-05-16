@@ -39,6 +39,57 @@ const volunteerLinks: SidebarLink[] = [
   { href: "/volunteer/verify", label: "Verify Athletes", icon: <CheckCircle className="w-4 h-4" /> },
 ];
 
+function NavLinks({
+  links,
+  pathname,
+  onLinkClick,
+}: {
+  links: SidebarLink[];
+  pathname: string;
+  onLinkClick?: () => void;
+}) {
+  return (
+    <nav className="flex-1 p-3 space-y-1">
+      {links.map((link) => {
+        const active =
+          link.href === "/admin" || link.href === "/volunteer"
+            ? pathname === link.href
+            : pathname.startsWith(link.href);
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            onClick={onLinkClick}
+            className={[
+              "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+              active
+                ? "bg-[#F5F3FF] text-[#5B21B6]"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+            ].join(" ")}
+          >
+            {link.icon}
+            {link.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+function SignOutButton({ onLogout }: { onLogout: () => void }) {
+  return (
+    <div className="p-3 border-t border-gray-100">
+      <button
+        onClick={onLogout}
+        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full"
+      >
+        <LogOut className="w-4 h-4" />
+        Sign out
+      </button>
+    </div>
+  );
+}
+
 export default function DashboardSidebar({ role }: DashboardSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
@@ -51,49 +102,6 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
     await supabase.auth.signOut();
     router.push("/");
     router.refresh();
-  }
-
-  function NavLinks({ onLinkClick }: { onLinkClick?: () => void }) {
-    return (
-      <nav className="flex-1 p-3 space-y-1">
-        {links.map((link) => {
-          const active =
-            link.href === "/admin" || link.href === "/volunteer"
-              ? pathname === link.href
-              : pathname.startsWith(link.href);
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onLinkClick}
-              className={[
-                "flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                active
-                  ? "bg-[#F5F3FF] text-[#5B21B6]"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-              ].join(" ")}
-            >
-              {link.icon}
-              {link.label}
-            </Link>
-          );
-        })}
-      </nav>
-    );
-  }
-
-  function SignOutButton() {
-    return (
-      <div className="p-3 border-t border-gray-100">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors w-full"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign out
-        </button>
-      </div>
-    );
   }
 
   return (
@@ -113,8 +121,8 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
             </span>
           </Link>
         </div>
-        <NavLinks />
-        <SignOutButton />
+        <NavLinks links={links} pathname={pathname} />
+        <SignOutButton onLogout={handleLogout} />
       </aside>
 
       {/* ── Mobile top bar ─────────────────────────────────────────── */}
@@ -172,8 +180,8 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <NavLinks onLinkClick={() => setMobileOpen(false)} />
-            <SignOutButton />
+            <NavLinks links={links} pathname={pathname} onLinkClick={() => setMobileOpen(false)} />
+            <SignOutButton onLogout={handleLogout} />
           </div>
         </div>
       )}
