@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
-import { Menu, X, Trophy, ChevronDown } from "lucide-react";
+import { Menu, X, Trophy } from "lucide-react";
 
 interface NavbarProps {
   user?: { email?: string; role?: string; hasAthleteProfile?: boolean } | null;

@@ -10,12 +10,12 @@ Juggernauts Athlete ID gives every grassroots athlete in Odisha a unique verifie
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS v4
 - **Auth + DB:** Supabase (PostgreSQL + Auth + Storage)
 - **Deployment:** Vercel
-- **Payments:** Razorpay (placeholder — see TODO comments)
+- **Payments:** Razorpay (direct REST API, no npm package required)
 
 ---
 
@@ -51,7 +51,8 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
    - `supabase/migrations/001_initial_schema.sql`
    - `supabase/migrations/002_rls_policies.sql`
    - `supabase/migrations/003_seed_data.sql`
-3. Go to **Storage** and create a bucket named `athlete-media` (set to public)
+3. Optionally, run `supabase/seed-demo-data.sql` to load 35 demo athletes, 8 events, and 25 registrations (see `DEMO.md` for full walkthrough)
+4. Go to **Storage** and create a bucket named `athlete-media` (set to public)
 
 ### 4. Run locally
 
@@ -148,15 +149,18 @@ Sport codes: FB, HK, AT, CK, BD, BK, VB, KB, WR, BX, SW, TT, TN, AR, OT
 
 ---
 
-## Razorpay Integration (TODO)
+## Razorpay Integration
 
-Payment integration is stubbed out. To enable:
+Payments are fully implemented using direct REST API calls (no npm package).
 
-1. Add env vars: `NEXT_PUBLIC_RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`
-2. Create a server action to generate a Razorpay order via their API
-3. Open Razorpay checkout in `components/forms/EventRegisterButton.tsx`
-4. On payment success, verify HMAC signature server-side and update `event_registrations.payment_status = 'paid'`
-5. Use the `payments` table to log all transactions
+**To enable payments:**
+1. Add to `.env.local`: `NEXT_PUBLIC_RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`
+2. Without these keys the app still works — paid events show a "Configure Razorpay" notice instead of the checkout button
+
+**Security:**
+- Amount is fetched server-side from the database (never trusted from the client)
+- HMAC-SHA256 signature verified server-side before any state changes
+- `RAZORPAY_KEY_SECRET` is never sent to the frontend
 
 ---
 
