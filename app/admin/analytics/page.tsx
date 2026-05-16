@@ -44,15 +44,15 @@ function BarRow({
 }) {
   const pct = max > 0 ? Math.round((count / max) * 100) : 0;
   return (
-    <div className="flex items-center gap-3">
-      <div className="w-32 shrink-0">
+    <div className="flex items-center gap-2">
+      <div className="w-28 sm:w-32 shrink-0 min-w-0">
         <span className="text-sm text-gray-700 truncate block">{label}</span>
         {sublabel && <span className="text-xs text-gray-400">{sublabel}</span>}
       </div>
-      <div className="flex-1 bg-gray-100 rounded-full h-2">
+      <div className="flex-1 bg-gray-100 rounded-full h-2 min-w-0">
         <div className={`${color} h-2 rounded-full transition-all`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-xs font-semibold text-gray-900 w-8 text-right">{count}</span>
+      <span className="text-xs font-semibold text-gray-900 w-6 text-right shrink-0">{count}</span>
     </div>
   );
 }
@@ -166,17 +166,17 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
   const rangeLabel = range === "30d" ? "Last 30 Days" : range === "90d" ? "Last 90 Days" : "All Time";
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-8">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Analytics</h1>
           <p className="text-sm text-gray-500 mt-1">
             Platform-wide statistics · <span className="font-medium text-[#5B21B6]">{rangeLabel}</span>
           </p>
         </div>
-        <div className="flex flex-col gap-3 items-end">
+        <div className="flex flex-col gap-3 items-start sm:items-end">
           {/* Date range tabs */}
           <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-1">
             {[

@@ -138,10 +138,10 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
     sp.q;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Athletes</h1>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between mb-4 md:mb-6 gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Athletes</h1>
           <p className="text-sm text-gray-500 mt-1">
             {athletes?.length ?? 0} athlete{(athletes?.length ?? 0) !== 1 ? "s" : ""}
             {hasActiveFilter ? " (filtered)" : ""}
@@ -149,10 +149,11 @@ export default async function AdminAthletesPage({ searchParams }: PageProps) {
         </div>
         <Link
           href="/admin/athletes/new"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#5B21B6] hover:bg-[#3B0764] text-white text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 md:px-4 rounded-xl bg-[#5B21B6] hover:bg-[#3B0764] text-white text-sm font-medium transition-colors shrink-0"
         >
           <UserPlus className="w-4 h-4" />
-          Create Athlete ID
+          <span className="hidden sm:inline">Create Athlete ID</span>
+          <span className="sm:hidden">Create</span>
         </Link>
       </div>
 

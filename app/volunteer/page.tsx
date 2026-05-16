@@ -77,7 +77,7 @@ export default async function VolunteerDashboard() {
   ]);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-4 md:p-6 max-w-5xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Volunteer Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">
@@ -139,16 +139,16 @@ export default async function VolunteerDashboard() {
                 {myAthletes?.map((a) => (
                   <div
                     key={a.id}
-                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors"
+                    className="flex items-start justify-between px-4 md:px-6 py-3 hover:bg-gray-50 transition-colors gap-3"
                   >
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{a.full_name}</p>
-                      <p className="text-xs text-gray-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{a.full_name}</p>
+                      <p className="text-xs text-gray-500 truncate">
                         {a.primary_sport} · {a.district} · {a.age_group}
                       </p>
-                      <p className="font-mono text-xs text-[#7C3AED] mt-0.5">{a.athlete_id}</p>
+                      <p className="font-mono text-xs text-[#7C3AED] mt-0.5 truncate">{a.athlete_id}</p>
                     </div>
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-col items-end gap-1 shrink-0">
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           PROFILE_STATUS_COLOR[a.profile_status ?? "pending"] ??
