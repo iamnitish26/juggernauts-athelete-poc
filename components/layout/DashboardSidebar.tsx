@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Trophy,
   Users,
   Calendar,
   BarChart2,
@@ -14,6 +13,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import BrandLogo from "@/components/brand/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -96,7 +96,6 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
   const router = useRouter();
   const supabase = createClient();
   const links = role === "admin" ? adminLinks : volunteerLinks;
-  const panelLabel = role === "admin" ? "Admin" : "Volunteer";
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -108,16 +107,11 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
     <>
       {/* ── Desktop sidebar ────────────────────────────────────────── */}
       <aside className="hidden md:flex w-60 shrink-0 bg-white border-r border-gray-100 min-h-screen flex-col">
-        <div className="p-5 border-b border-gray-100">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[#5B21B6] flex items-center justify-center">
-              <Trophy className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-[#3B0764] text-sm">
-              Juggernauts
-              <span className="block text-[10px] font-medium text-[#7C3AED] -mt-0.5">
-                {panelLabel} Panel
-              </span>
+        <div className="p-4 border-b border-gray-100">
+          <Link href="/" className="flex flex-col gap-1">
+            <BrandLogo variant="dark" size="sm" />
+            <span className="text-[9px] font-semibold text-[#7C3AED] tracking-wide">
+              {role === "admin" ? "Admin Panel" : "Volunteer Portal"}
             </span>
           </Link>
         </div>
@@ -135,14 +129,9 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
           <Menu className="w-5 h-5" />
         </button>
         <Link href="/" className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 rounded-md bg-[#5B21B6] flex items-center justify-center shrink-0">
-            <Trophy className="w-3.5 h-3.5 text-white" />
-          </div>
-          <span className="font-bold text-[#3B0764] text-sm truncate">
-            Juggernauts
-            <span className="text-[10px] font-medium text-[#7C3AED] ml-1">
-              {panelLabel}
-            </span>
+          <BrandLogo variant="dark" size="sm" className="min-w-0" />
+          <span className="text-[9px] font-semibold text-[#7C3AED] shrink-0">
+            {role === "admin" ? "Admin" : "Volunteer"}
           </span>
         </Link>
       </div>
@@ -159,17 +148,12 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
             <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-2">
               <Link
                 href="/"
-                className="flex items-center gap-2"
+                className="flex flex-col gap-1 min-w-0"
                 onClick={() => setMobileOpen(false)}
               >
-                <div className="w-7 h-7 rounded-lg bg-[#5B21B6] flex items-center justify-center">
-                  <Trophy className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold text-[#3B0764] text-sm">
-                  Juggernauts
-                  <span className="block text-[10px] font-medium text-[#7C3AED] -mt-0.5">
-                    {panelLabel} Panel
-                  </span>
+                <BrandLogo variant="dark" size="sm" />
+                <span className="text-[9px] font-semibold text-[#7C3AED] tracking-wide">
+                  {role === "admin" ? "Admin Panel" : "Volunteer Portal"}
                 </span>
               </Link>
               <button

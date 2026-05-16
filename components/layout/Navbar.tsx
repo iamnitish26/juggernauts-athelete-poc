@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
-import { Menu, X, Trophy } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 interface NavbarProps {
   user?: { email?: string; role?: string; hasAthleteProfile?: boolean } | null;
@@ -44,15 +45,7 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-[#5B21B6] flex items-center justify-center group-hover:bg-[#7C3AED] transition-colors">
-              <Trophy className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-[#3B0764] text-lg leading-tight">
-              Juggernauts
-              <span className="block text-xs font-medium text-[#7C3AED] -mt-1">
-                Athlete ID
-              </span>
-            </span>
+            <BrandLogo variant="dark" size="sm" showProductName />
           </Link>
 
           {/* Desktop Nav */}

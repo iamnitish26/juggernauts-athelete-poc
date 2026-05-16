@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy } from "lucide-react";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 export default function Footer() {
   return (
@@ -7,12 +7,15 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-[#7C3AED] flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-lg">Juggernauts Athlete ID</span>
+            <div className="mb-3">
+              <BrandLogo variant="light" size="md" />
             </div>
+            <p className="text-purple-100 text-sm font-semibold mb-1">
+              Juggernauts Athlete ID
+            </p>
+            <p className="text-purple-300 text-xs mb-3">
+              An initiative by Juggernauts Sporting Foundation (JSF).
+            </p>
             <p className="text-purple-200 text-sm leading-relaxed">
               Empowering grassroots sports talent in Odisha. A Section 8 registered
               sports organisation building the future of sports in India.
@@ -50,7 +53,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="hover:text-white transition-colors"
                 >
-                  Juggernauts Website
+                  Juggernauts Sporting Foundation Website
                 </a>
               </li>
               <li>
@@ -65,7 +68,7 @@ export default function Footer() {
 
         <div className="border-t border-purple-700 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-2">
           <p className="text-xs text-purple-300">
-            © {new Date().getFullYear()} Juggernauts Sports. All rights reserved.
+            © {new Date().getFullYear()} Juggernauts Sporting Foundation. All rights reserved.
           </p>
           <p className="text-xs text-purple-400">
             Built for grassroots athletes of Odisha

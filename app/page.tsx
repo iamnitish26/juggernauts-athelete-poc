@@ -263,17 +263,19 @@ export default async function LandingPage() {
             <h2 className="text-2xl font-bold text-[#111827]">
               A platform you can trust
             </h2>
-            <p className="mt-2 text-gray-500 text-sm max-w-xl mx-auto">
-              Juggernauts is committed to safe, ethical grassroots sports
-              development in Odisha
+            <p className="mt-2 text-gray-500 text-sm max-w-2xl mx-auto">
+              Juggernauts Athlete ID is an initiative by{" "}
+              <span className="font-semibold text-[#5B21B6]">Juggernauts Sporting Foundation (JSF)</span>
+              , a Section 8 registered sports organisation working to support
+              grassroots sports development in Odisha.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
               {
                 icon: <Shield className="w-5 h-5 text-[#5B21B6]" />,
-                title: "Section 8 Registered",
-                desc: "Juggernauts is a registered non-profit sports organisation focused on grassroots development.",
+                title: "Section 8 Registered Organisation",
+                desc: "Built by Juggernauts Sporting Foundation (JSF), a registered non-profit sports organisation focused on grassroots sports development.",
               },
               {
                 icon: <Lock className="w-5 h-5 text-[#5B21B6]" />,

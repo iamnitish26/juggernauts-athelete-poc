@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Trophy, CheckCircle, Mail } from "lucide-react";
+import { CheckCircle, Mail } from "lucide-react";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
@@ -108,12 +109,10 @@ export default function RegisterPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC] px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-2xl bg-[#5B21B6] flex items-center justify-center">
-              <Trophy className="w-7 h-7 text-white" />
-            </div>
-            <span className="font-bold text-[#3B0764] text-xl">
-              Juggernauts Athlete ID
+          <Link href="/" className="inline-flex flex-col items-center gap-1.5">
+            <BrandLogo variant="dark" size="lg" />
+            <span className="text-xs text-[#7C3AED] font-medium">
+              by Juggernauts Sporting Foundation
             </span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-gray-900">
