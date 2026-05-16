@@ -105,9 +105,9 @@ export default async function AdminDashboard() {
   const hasPendingAction = (pendingProfiles ?? 0) > 0 || (pendingVerification ?? 0) > 0;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-500 text-sm mt-1">
           Overview of athlete registrations and platform activity
         </p>
@@ -186,16 +186,16 @@ export default async function AdminDashboard() {
                   <Link
                     key={a.id}
                     href={`/admin/athletes/${a.id}`}
-                    className="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 hover:bg-orange-50 border border-orange-100 transition-colors"
+                    className="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 hover:bg-orange-50 border border-orange-100 transition-colors gap-2"
                   >
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{a.full_name}</p>
-                      <p className="text-xs text-gray-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{a.full_name}</p>
+                      <p className="text-xs text-gray-500 truncate">
                         {a.primary_sport} · {a.district} ·{" "}
                         <span className="font-mono">{a.athlete_id}</span>
                       </p>
                     </div>
-                    <span className="text-xs text-orange-700 font-medium">Review →</span>
+                    <span className="text-xs text-orange-700 font-medium shrink-0">Review →</span>
                   </Link>
                 ))}
                 {(pendingProfiles ?? 0) > 5 && (
@@ -237,16 +237,16 @@ export default async function AdminDashboard() {
                   <Link
                     key={a.id}
                     href={`/admin/athletes/${a.id}`}
-                    className="flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between px-4 md:px-6 py-3 hover:bg-gray-50 transition-colors gap-2"
                   >
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{a.full_name}</p>
-                      <p className="text-xs text-gray-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{a.full_name}</p>
+                      <p className="text-xs text-gray-500 truncate">
                         {a.primary_sport} · {a.district} ·{" "}
                         <span className="font-mono">{a.athlete_id}</span>
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                           PROFILE_STATUS_COLOR[a.profile_status ?? "pending"] ??

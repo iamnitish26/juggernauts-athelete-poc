@@ -137,17 +137,18 @@ export default async function AdminEventsPage({ searchParams }: PageProps) {
   const hasFilters = !!(sp.q || sp.sport || sp.district || sp.age_category || sp.status || sp.paid);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Events</h1>
+      <div className="flex items-center justify-between mb-4 md:mb-6 gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Events</h1>
           <p className="text-sm text-gray-500 mt-1">{annotated.length} event{annotated.length !== 1 ? "s" : ""}</p>
         </div>
-        <Link href="/admin/events/new">
+        <Link href="/admin/events/new" className="shrink-0">
           <Button size="sm" className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            New Event
+            <span className="hidden sm:inline">New Event</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </Link>
       </div>
@@ -159,7 +160,7 @@ export default async function AdminEventsPage({ searchParams }: PageProps) {
         {sp.age_category && <input type="hidden" name="age_category" value={sp.age_category} />}
         {sp.status       && <input type="hidden" name="status"       value={sp.status} />}
         {sp.paid         && <input type="hidden" name="paid"         value={sp.paid} />}
-        <div className="relative max-w-lg">
+        <div className="relative w-full md:max-w-lg">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             name="q"

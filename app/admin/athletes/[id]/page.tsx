@@ -111,7 +111,7 @@ export default async function AdminAthleteDetailPage({ params }: PageProps) {
   const isProfileApproved = athlete.profile_status === "approved";
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6 text-sm text-gray-500">
         <Link href="/admin/athletes" className="hover:text-[#5B21B6]">
