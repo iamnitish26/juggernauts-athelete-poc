@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef } from "react";
-import { Trophy, MapPin, Download } from "lucide-react";
+import { MapPin } from "lucide-react";
 import AthleteQRCode from "@/components/ui/AthleteQRCode";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 interface PlayerCardProps {
   athleteId: string;
@@ -53,15 +54,7 @@ export default function PlayerCard({
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 bg-white/20 rounded-md flex items-center justify-center">
-              <Trophy className="w-3.5 h-3.5 text-white" />
-            </div>
-            <div className="leading-tight">
-              <p className="text-xs font-bold text-white">JUGGERNAUTS</p>
-              <p className="text-[9px] text-purple-300 -mt-0.5">Athlete ID</p>
-            </div>
-          </div>
+          <BrandLogo variant="light" size="card" />
           <span
             className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
               BADGE_COLORS[verificationStatus] ?? "bg-white/20 text-white"
@@ -111,6 +104,11 @@ export default function PlayerCard({
         <div className="flex justify-center bg-white rounded-2xl p-2">
           <AthleteQRCode athleteId={athleteId} size={80} />
         </div>
+
+        {/* Footer attribution */}
+        <p className="text-center text-[8px] text-purple-400 mt-3 tracking-wide">
+          Verified on Juggernauts Athlete ID by JSF
+        </p>
       </div>
 
       {/* Download placeholder */}

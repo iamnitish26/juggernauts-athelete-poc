@@ -8,13 +8,13 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Juggernauts Athlete ID | Grassroots Sports Platform",
+  title: "Juggernauts Athlete ID | Grassroots Sports Platform by JSF",
   description:
-    "Create your digital sports profile, get verified, and register for events. Juggernauts Athlete ID — empowering grassroots athletes in Odisha.",
-  keywords: ["sports", "athlete", "Odisha", "grassroots", "football", "hockey", "Juggernauts"],
+    "Create verified grassroots athlete profiles, register for events, and build a digital sports identity across Odisha with Juggernauts Athlete ID by Juggernauts Sporting Foundation.",
+  keywords: ["sports", "athlete", "Odisha", "grassroots", "football", "hockey", "Juggernauts", "JSF", "Juggernauts Sporting Foundation"],
   openGraph: {
-    title: "Juggernauts Athlete ID",
-    description: "Your digital sports identity — built for grassroots athletes in Odisha",
+    title: "Juggernauts Athlete ID | by Juggernauts Sporting Foundation",
+    description: "Your verified digital sports identity — built for grassroots athletes across Odisha by JSF.",
     type: "website",
   },
 };
