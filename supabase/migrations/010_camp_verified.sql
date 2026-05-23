@@ -246,32 +246,32 @@ create policy "athlete_camp_scores: public read"
 insert into public.test_definitions
   (id, sport, test_name, test_category, unit, lower_is_better, protocol_text, equipment_needed, scoring_weight)
 values
-  ('td000001-0000-0000-0000-000000000000','Football','30m Sprint',
+  ('00000001-0000-0000-0000-000000000000','Football','30m Sprint',
    'athletic_base','seconds',true,
    'Athlete starts from standing position. Timer starts on first movement. Best of two attempts recorded.',
    'Measuring tape, cones, stopwatch or timing gates',1.0),
 
-  ('td000002-0000-0000-0000-000000000000','Football','5-10-5 Agility Test',
+  ('00000002-0000-0000-0000-000000000000','Football','5-10-5 Agility Test',
    'athletic_base','seconds',true,
    'Athlete starts at centre cone. Sprints 5m right, back 10m left, back 5m to centre. Best of two attempts.',
    'Cones, stopwatch or timing gates',1.0),
 
-  ('td000003-0000-0000-0000-000000000000','Football','Yo-Yo / Beep Test',
+  ('00000003-0000-0000-0000-000000000000','Football','Yo-Yo / Beep Test',
    'athletic_base','level',false,
    'Standard beep test. Record final level reached. Athlete runs back and forth at increasing pace.',
    'Cones, audio player, beep test audio file',1.0),
 
-  ('td000004-0000-0000-0000-000000000000','Football','Dribble Slalom',
+  ('00000004-0000-0000-0000-000000000000','Football','Dribble Slalom',
    'technical_skill','seconds',true,
    'Athlete dribbles through 10 cones set 1.5m apart. Timed from first touch to last cone. Best of two attempts.',
    'Football, 10 cones, stopwatch',1.0),
 
-  ('td000005-0000-0000-0000-000000000000','Football','Passing Accuracy',
+  ('00000005-0000-0000-0000-000000000000','Football','Passing Accuracy',
    'technical_skill','out of 10',false,
    'Athlete makes 10 passes to a target zone from 15m. Count successful passes that hit target.',
    'Football, target markers, measuring tape',1.0),
 
-  ('td000006-0000-0000-0000-000000000000','Football','Shooting Accuracy',
+  ('00000006-0000-0000-0000-000000000000','Football','Shooting Accuracy',
    'technical_skill','out of 10',false,
    'Athlete takes 10 shots from 12m targeting marked goal zones. Count shots on target in correct zone.',
    'Football, goal with zone markings, measuring tape',1.0)
