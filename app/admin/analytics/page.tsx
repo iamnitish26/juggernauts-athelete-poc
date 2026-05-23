@@ -13,6 +13,9 @@ import {
   CreditCard,
   Globe,
   BarChart2,
+  Tent,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 
 export const metadata = { title: "Analytics | Admin" };
@@ -98,6 +101,20 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
     supabase.from("athletes").select("*", { count: "exact", head: true }).eq("is_active", false),
     supabase.from("athletes").select("*", { count: "exact", head: true }).eq("is_active", true),
   ]);
+
+  // ── Camp Verified stats ─────────────────────────────────────────────────
+  const [{ count: totalCamps }, { count: campParticipants }, { data: campScoreRows }] = await Promise.all([
+    supabase.from("camps").select("*", { count: "exact", head: true }),
+    supabase.from("camp_participants").select("*", { count: "exact", head: true }),
+    supabase.from("athlete_camp_scores").select("rating_10, recommendation_category, camp_id"),
+  ]);
+
+  const campVerified = campScoreRows?.length ?? 0;
+  const campRecommended = campScoreRows?.filter(r => r.recommendation_category === "JSF Recommended").length ?? 0;
+  const campWatchlist = campScoreRows?.filter(r => r.recommendation_category === "JSF Watchlist").length ?? 0;
+  const avgRating = campScoreRows && campScoreRows.length > 0
+    ? campScoreRows.reduce((s, r) => s + (r.rating_10 ?? 0), 0) / campScoreRows.length
+    : null;
 
   // ── Athlete aggregations ────────────────────────────────────────────────
   const bySport: Record<string, number> = {};
@@ -407,6 +424,28 @@ export default async function AdminAnalyticsPage({ searchParams }: PageProps) {
             color="bg-purple-50"
           />
         </div>
+      </section>
+
+      {/* ── Camp Verified ───────────────────────────────────────────────── */}
+      <section>
+        <SectionTitle icon={<Award className="w-5 h-5" />} title="Camp Verified" />
+        <Card>
+          <CardBody>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <StatCard label="Total Camps" value={totalCamps ?? 0} icon={<Tent className="w-5 h-5 text-[#5B21B6]" />} />
+              <StatCard label="Camp Participants" value={campParticipants ?? 0} icon={<Users className="w-5 h-5 text-[#5B21B6]" />} />
+              <StatCard label="Scores Calculated" value={campVerified} icon={<TrendingUp className="w-5 h-5 text-[#5B21B6]" />} />
+              <StatCard label="JSF Recommended" value={campRecommended} icon={<Award className="w-5 h-5 text-emerald-600" />} color="bg-emerald-50" />
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+              <span>JSF Watchlist: <strong>{campWatchlist}</strong></span>
+              {avgRating != null && <span>Avg Rating: <strong>{avgRating.toFixed(1)}/10</strong></span>}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">
+              JSF Camp Verified — Football assessment camps only (Module 1). More sports coming soon.
+            </p>
+          </CardBody>
+        </Card>
       </section>
 
       {/* ── Athlete Breakdowns ──────────────────────────────────────────── */}
