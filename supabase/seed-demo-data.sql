@@ -55,6 +55,13 @@ delete from public.athletes
     'JG-OD-BB-2026-000001'
   );
 
+-- Reset sequences to 0 so the ON CONFLICT upsert below sets correct values
+delete from public.athlete_id_sequences
+  where (sport_code, year) in (
+    ('FB', 2026), ('HK', 2026), ('AT', 2026), ('BD', 2026),
+    ('CK', 2026), ('VB', 2026), ('KB', 2026), ('AR', 2026), ('BB', 2026)
+  );
+
 delete from public.events
   where id in (
     'e0000001-0000-0000-0000-000000000000',
@@ -1060,6 +1067,23 @@ update public.event_registrations
   set attendance_marked = true
   where event_id = 'e0000008-0000-0000-0000-000000000000'
     and registration_status = 'confirmed';
+
+-- ============================================================
+-- ATHLETE ID SEQUENCES — advance counters past the seeded demo IDs
+-- so real registrations don't collide with demo data
+-- ============================================================
+insert into public.athlete_id_sequences (sport_code, year, last_sequence) values
+  ('FB', 2026, 8),
+  ('HK', 2026, 7),
+  ('AT', 2026, 5),
+  ('BD', 2026, 2),
+  ('CK', 2026, 4),
+  ('VB', 2026, 3),
+  ('KB', 2026, 3),
+  ('AR', 2026, 2),
+  ('BB', 2026, 1)
+on conflict (sport_code, year) do update
+  set last_sequence = excluded.last_sequence;
 
 -- ============================================================
 -- Summary

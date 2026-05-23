@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  Tent,
 } from "lucide-react";
 import BrandLogo from "@/components/brand/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
@@ -31,6 +32,7 @@ const adminLinks: SidebarLink[] = [
   { href: "/admin",           label: "Overview",        icon: <Home className="w-4 h-4" /> },
   { href: "/admin/athletes",  label: "Athletes",        icon: <Users className="w-4 h-4" /> },
   { href: "/admin/events",    label: "Events",          icon: <Calendar className="w-4 h-4" /> },
+  { href: "/admin/camps",     label: "Camps",           icon: <Tent className="w-4 h-4" /> },
   { href: "/admin/analytics", label: "Analytics",       icon: <BarChart2 className="w-4 h-4" /> },
 ];
 

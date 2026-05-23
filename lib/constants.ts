@@ -140,3 +140,63 @@ export function getAgeFromDob(dob: string): number {
 export function isMinor(dob: string): boolean {
   return getAgeFromDob(dob) < 18;
 }
+
+// ── Camp Verified ──────────────────────────────────────────────────────────
+
+export const CAMP_STATUS_LABELS: Record<string, string> = {
+  draft:     "Draft",
+  open:      "Open",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+export const CAMP_STATUS_COLORS: Record<string, string> = {
+  draft:     "bg-yellow-100 text-yellow-800",
+  open:      "bg-green-100 text-green-800",
+  completed: "bg-blue-100 text-blue-800",
+  cancelled: "bg-red-100 text-red-700",
+};
+
+export const CAMP_VERIFICATION_STATUS_LABELS: Record<string, string> = {
+  not_started:   "Not Started",
+  in_progress:   "In Progress",
+  camp_verified: "Camp Verified",
+  not_verified:  "Not Verified",
+};
+
+export const CAMP_VERIFICATION_STATUS_COLORS: Record<string, string> = {
+  not_started:   "bg-gray-100 text-gray-600",
+  in_progress:   "bg-yellow-100 text-yellow-800",
+  camp_verified: "bg-emerald-100 text-emerald-800",
+  not_verified:  "bg-red-100 text-red-700",
+};
+
+export const RECOMMENDATION_CATEGORY_COLORS: Record<string, string> = {
+  "JSF Recommended":  "bg-emerald-100 text-emerald-800",
+  "JSF Watchlist":    "bg-blue-100 text-blue-800",
+  "Development Track":"bg-purple-100 text-purple-800",
+  "Participation Track": "bg-gray-100 text-gray-600",
+};
+
+export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
+  registered: "Registered",
+  attended:   "Attended",
+  absent:     "Absent",
+  withdrawn:  "Withdrawn",
+};
+
+export const ATTENDANCE_STATUS_COLORS: Record<string, string> = {
+  registered: "bg-yellow-100 text-yellow-800",
+  attended:   "bg-green-100 text-green-800",
+  absent:     "bg-red-100 text-red-700",
+  withdrawn:  "bg-gray-100 text-gray-600",
+};
+
+export const FOOTBALL_TEST_NAMES = [
+  "30m Sprint",
+  "5-10-5 Agility Test",
+  "Yo-Yo / Beep Test",
+  "Dribble Slalom",
+  "Passing Accuracy",
+  "Shooting Accuracy",
+] as const;

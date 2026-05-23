@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Lock,
   Mail,
+  Award,
+  CheckCircle,
 } from "lucide-react";
 
 interface PageProps {
@@ -68,7 +70,7 @@ export default async function AthleteProfilePage({ params }: PageProps) {
     .from("athletes")
     .select(
       `
-      athlete_id, full_name, profile_photo_url, photo_consent,
+      id, athlete_id, full_name, profile_photo_url, photo_consent,
       primary_sport, position_event_category, district, state,
       age_group, current_club_school, achievement_summary,
       verification_status, instagram_link, video_link,
@@ -99,6 +101,24 @@ export default async function AthleteProfilePage({ params }: PageProps) {
       .eq("id", user.id)
       .single();
     navUser = { email: user.email, role: profile?.role };
+  }
+
+  // Load camp score if public_summary_enabled — only show if profile is approved and public
+  let campScore = null;
+  if (athlete && athlete.profile_status === "approved" && athlete.is_public) {
+    const { data: cp } = await supabase
+      .from("camp_participants")
+      .select(`
+        public_summary_enabled,
+        athlete_camp_scores(rating_10, recommendation_category, confidence_label, small_cohort_warning),
+        camps(name, sport, district, camp_date)
+      `)
+      .eq("athlete_id", athlete.id)
+      .eq("public_summary_enabled", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (cp?.public_summary_enabled) campScore = cp;
   }
 
   // Show "not available" when:
@@ -214,6 +234,21 @@ export default async function AthleteProfilePage({ params }: PageProps) {
                   {verificationExplanation}
                 </p>
               )}
+              {campScore && (
+                <div className="mt-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    Camp Verified — Football
+                  </span>
+                  {campScore.athlete_camp_scores && (
+                    <div className="mt-1 text-xs text-gray-500">
+                      {Array.isArray(campScore.athlete_camp_scores)
+                        ? campScore.athlete_camp_scores[0]?.recommendation_category
+                        : (campScore.athlete_camp_scores as { recommendation_category?: string })?.recommendation_category}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-center gap-1 text-purple-200 text-sm">
@@ -292,6 +327,40 @@ export default async function AthleteProfilePage({ params }: PageProps) {
                 </p>
               </div>
             </div>
+
+            {/* Camp Verified section */}
+            {campScore && (
+              <div className="px-6 pb-4">
+                <div className="mt-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Award className="w-4 h-4 text-emerald-700" />
+                    <span className="text-sm font-bold text-emerald-900">JSF Camp Verified</span>
+                  </div>
+                  {(() => {
+                    const scores = Array.isArray(campScore.athlete_camp_scores)
+                      ? campScore.athlete_camp_scores[0]
+                      : campScore.athlete_camp_scores as { rating_10?: number; recommendation_category?: string } | null;
+                    const camp = Array.isArray(campScore.camps) ? campScore.camps[0] : campScore.camps as { name?: string; district?: string } | null;
+                    return (
+                      <>
+                        {scores?.rating_10 != null && (
+                          <p className="text-sm text-emerald-800 font-semibold">Rating: {scores.rating_10.toFixed(1)} / 10</p>
+                        )}
+                        {scores?.recommendation_category && (
+                          <p className="text-xs text-emerald-700 mt-0.5">{scores.recommendation_category}</p>
+                        )}
+                        {camp?.name && (
+                          <p className="text-xs text-gray-500 mt-1">{camp.name}{camp.district ? ` · ${camp.district}` : ""}</p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+                          Camp Verified indicates this athlete attended a structured JSF football assessment camp. It is not a guarantee of selection.
+                        </p>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
             {/* Social links */}
             {(athlete.instagram_link || athlete.video_link) && (
